@@ -1,6 +1,6 @@
 /**
  * Notifications par e-mail : quand une pierre est posée, les membres de l'organisation sont prévenus ;
- * quand un commentaire arrive, l'auteur de la pierre et ceux qui l'ont calée le sont aussi.
+ * quand un commentaire arrive, l'auteur de la pierre, ceux qui l'ont calée et ceux qui l'ont commentée le sont aussi.
  *
  * Les envois sont différés : une tâche cron (notify.pb.js) passe chaque minute, si bien que publier
  * reste instantané quelle que soit la taille de l'équipe, et que plusieurs commentaires rapprochés sur
@@ -76,11 +76,11 @@ function renderRetexEmail(ctx) {
   return { subject, html, text };
 }
 
-/** Des commentaires sont arrivés (à l'auteur et à ceux qui ont calé) : ctx = { appName, appURL, orgName, isAuthor, retex: { id, title }, comments: [{ authorName, body }] } */
+/** Des commentaires sont arrivés (à l'auteur, à ceux qui ont calé et à ceux qui ont commenté) : ctx = { appName, appURL, orgName, isAuthor, retex: { id, title }, comments: [{ authorName, body }] } */
 function renderCommentEmail(ctx) {
   const names = []; ctx.comments.forEach((c) => { if (!names.includes(c.authorName)) names.push(c.authorName); });
   const who = listNames(names), verb = names.length > 1 ? "ont commenté" : "a commenté";
-  const which = ctx.isAuthor ? "votre pierre" : "une pierre que vous avez calée";
+  const which = ctx.isAuthor ? "votre pierre" : "une pierre que vous suivez";
   const subject = `${who} ${verb} ${which} : ${excerpt(ctx.retex.title, 70)}`;
   const body = ctx.comments.map((c) => label(c.authorName) + block(excerpt(c.body, 600))).join("");
   const html = layout({
@@ -144,9 +144,10 @@ function notifyComments(app, m) {
     let r, org;
     try { r = app.findRecordById("retex", retexId); org = app.findRecordById("organisations", r.get("organisation")); } catch (_) { continue; }
     const batch = byRetex[retexId];
-    // Destinataires : l'auteur de la pierre et ceux qui l'ont calée, jamais pour leurs propres mots
+    // Destinataires : l'auteur de la pierre, ceux qui l'ont calée et ceux qui l'ont commentée, jamais pour leurs propres mots
     const participants = [r.get("author")];
     for (const v of app.findRecordsByFilter("votes", "retex = {:r}", "created", 500, 0, { r: retexId })) { const u = v.get("user"); if (!participants.includes(u)) participants.push(u); }
+    for (const c of app.findRecordsByFilter("comments", "retex = {:r}", "created", 500, 0, { r: retexId })) { const a = c.get("author"); if (!participants.includes(a)) participants.push(a); }
     for (const pid of participants) {
       const mine = batch.filter((c) => c.get("author") !== pid);
       if (!mine.length) continue;

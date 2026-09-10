@@ -45,7 +45,7 @@ par date ou par votes ; la recherche et les tags filtrent. Les commentaires appo
 Cinq niveaux, d'Observateur à Pilier, une altitude qui grimpe, des badges, et « la cordée » : le classement de l'équipe.
 
 **Rester au courant.** Quand un membre pose une pierre, l'équipe reçoit un e-mail sobre avec l'essentiel ; quand
-quelqu'un commente une pierre, son auteur et ceux qui l'ont calée sont prévenus. Chacun peut couper ces e-mails
+quelqu'un commente une pierre, son auteur et ceux qui l'ont calée ou commentée sont prévenus. Chacun peut couper ces e-mails
 depuis son compte.
 
 **Rester entre soi.** Chaque organisation est isolée : l'inscription rattache automatiquement l'utilisateur au domaine

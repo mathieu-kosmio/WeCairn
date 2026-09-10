@@ -2,7 +2,7 @@
 /**
  * WeCairn : notifications par e-mail, traitées chaque minute (voir notify.js).
  * Prévient les membres quand une pierre est posée, et l'auteur d'une pierre (ainsi que ceux qui l'ont
- * calée) quand un commentaire arrive. Nécessite un canal d'envoi (API Brevo ou SMTP) ; sans lui,
+ * calée ou commentée) quand un commentaire arrive. Nécessite un canal d'envoi (API Brevo ou SMTP) ; sans lui,
  * les échecs sont journalisés et la file avance quand même.
  */
 cronAdd("wecairn_notify", "* * * * *", () => {
