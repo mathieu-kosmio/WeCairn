@@ -4,7 +4,7 @@
 
 1. Pousser le dépôt sur GitHub (privé ou public).
 2. Dans Coolify : **+ New Resource > Docker Compose**, source Git, ce dépôt, branche `main`. Coolify lit
-   `docker-compose.yml` et construit l'image depuis le `Dockerfile`.
+   `docker-compose.yaml` et construit l'image depuis le `Dockerfile`.
 3. Assigner un domaine au service `wecairn` (par exemple `https://wecairn.exemple.fr`, port 8090). Coolify gère le
    certificat et le reverse proxy : le compose n'expose aucun port et n'embarque pas de Traefik.
 4. Déployer, puis ouvrir `https://wecairn.exemple.fr/_/` pour créer le superutilisateur (première ouverture uniquement).

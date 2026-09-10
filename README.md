@@ -88,7 +88,7 @@ web/index.html                   l'interface, une page, sans build, servie par P
 pocketbase/pb_schema.json        collections, vues SQL (fil, cordée), règles d'accès par organisation
 pocketbase/pb_hooks/             rattachement par domaine, normalisation, IA vocale, compte, horizon
 mcp/server.js                    serveur MCP (stdio) pour Claude Desktop et Claude Code
-Dockerfile, docker-compose.yml   une image, un volume
+Dockerfile, docker-compose.yaml   une image, un volume
 docs/                            documentation
 ```
 
