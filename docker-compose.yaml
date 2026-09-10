@@ -10,6 +10,9 @@ services:
       # Dictée vocale (optionnel) : à définir comme secrets dans Coolify
       - WECAIRN_AI_PROVIDER=${WECAIRN_AI_PROVIDER:-}
       - WECAIRN_AI_KEY=${WECAIRN_AI_KEY:-}
+      # E-mails via l'API Brevo (optionnel) : clé en secret, expéditeur validé chez Brevo
+      - WECAIRN_BREVO_API_KEY=${WECAIRN_BREVO_API_KEY:-}
+      - WECAIRN_MAIL_FROM=${WECAIRN_MAIL_FROM:-}
     volumes:
       - wecairn_data:/pb/pb_data
     deploy:

@@ -24,8 +24,13 @@
      curl -s -X PUT https://wecairn.exemple.fr/api/collections/import -H "Authorization: $TOKEN" \
      -H 'Content-Type: application/json' --data @-
    ```
-6. **Settings > Mail settings** : renseigner un SMTP (Brevo ou autre) pour la réinitialisation de mot de passe.
-   Sans SMTP, tout fonctionne sauf « Mot de passe oublié ».
+6. E-mails (réinitialisation de mot de passe, codes OTP) : deux options, la première recommandée.
+   - **API Brevo, sans SMTP** : variables `WECAIRN_BREVO_API_KEY` (cochée « secret ») et `WECAIRN_MAIL_FROM`
+     (par exemple `WeCairn <noreply@exemple.fr>`, adresse ou domaine validé chez Brevo). Le hook `mail.pb.js`
+     route alors tous les envois de PocketBase vers `api.brevo.com`. Aucun réglage dans la console.
+   - **SMTP classique** : *Settings > Mail settings* (hôte, port, identifiants, expéditeur).
+   Sans l'un ni l'autre, tout fonctionne sauf « Mot de passe oublié ». Les échecs d'envoi apparaissent dans
+   *Logs* (« Failed to send password reset email », avec la réponse de Brevo).
 7. **Settings > Backups** : activer les sauvegardes automatiques vers un S3 (Garage ou MinIO sur le même Coolify,
    ou un fournisseur). Le volume est le seul endroit où vivent les données.
 8. **Settings > Application** : renseigner l'URL publique (utilisée dans les e-mails).

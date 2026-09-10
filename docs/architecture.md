@@ -77,5 +77,5 @@ navigateur. C'est la seule donnée visible sans connexion.
   En mode temps réel, le serveur génère un jeton éphémère limité à une session.
 - Le mot de passe unique application / console n'existe que si un superutilisateur porte le même e-mail qu'un membre ;
   les hooks alignent les deux mots de passe à chaque connexion et à chaque changement.
-- La réinitialisation de mot de passe demande un SMTP (réglage dans la console).
+- La réinitialisation de mot de passe demande un canal d'envoi : l'API Brevo (`WECAIRN_BREVO_API_KEY`, hook `mail.pb.js`) ou un SMTP réglé dans la console.
 - Le micro exige HTTPS (ou `localhost`).
