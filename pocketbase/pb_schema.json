@@ -87,6 +87,7 @@
     "system": false,
     "fields": [
       {
+        "id": "text3208210256",
         "name": "id",
         "type": "text",
         "primaryKey": true,
@@ -98,6 +99,7 @@
         "autogeneratePattern": "[a-z0-9]{15}"
       },
       {
+        "id": "password901924565",
         "name": "password",
         "type": "password",
         "system": true,
@@ -107,6 +109,7 @@
         "max": 0
       },
       {
+        "id": "text2504183744",
         "name": "tokenKey",
         "type": "text",
         "system": true,
@@ -117,28 +120,52 @@
         "autogeneratePattern": "[a-zA-Z0-9]{50}"
       },
       {
+        "id": "email3885137012",
         "name": "email",
         "type": "email",
         "system": true,
         "required": true
       },
       {
+        "id": "bool1547992806",
         "name": "emailVisibility",
         "type": "bool",
         "system": true
       },
       {
+        "id": "bool256245529",
         "name": "verified",
         "type": "bool",
         "system": true
       },
       {
+        "id": "text1579384326",
         "name": "name",
         "type": "text",
         "required": true,
         "min": 1,
         "max": 80,
         "presentable": true
+      },
+      {
+        "id": "file376926767",
+        "hidden": false,
+        "maxSelect": 1,
+        "maxSize": 0,
+        "mimeTypes": [
+          "image/jpeg",
+          "image/png",
+          "image/svg+xml",
+          "image/gif",
+          "image/webp"
+        ],
+        "name": "avatar",
+        "presentable": false,
+        "protected": false,
+        "required": false,
+        "system": false,
+        "thumbs": null,
+        "type": "file"
       },
       {
         "name": "organisation",
@@ -150,12 +177,14 @@
         "maxSelect": 1
       },
       {
+        "id": "autodate2990389176",
         "name": "created",
         "type": "autodate",
         "onCreate": true,
         "onUpdate": false
       },
       {
+        "id": "autodate3332085495",
         "name": "updated",
         "type": "autodate",
         "onCreate": true,
