@@ -177,6 +177,10 @@
         "maxSelect": 1
       },
       {
+        "name": "mute_emails",
+        "type": "bool"
+      },
+      {
         "id": "autodate2990389176",
         "name": "created",
         "type": "autodate",
@@ -360,6 +364,11 @@
         "presentable": false
       },
       {
+        "name": "notified",
+        "type": "bool",
+        "hidden": true
+      },
+      {
         "name": "created",
         "type": "autodate",
         "onCreate": true,
@@ -475,6 +484,11 @@
         "min": 1,
         "max": 4000,
         "presentable": false
+      },
+      {
+        "name": "notified",
+        "type": "bool",
+        "hidden": true
       },
       {
         "name": "created",

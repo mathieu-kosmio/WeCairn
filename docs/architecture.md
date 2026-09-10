@@ -77,5 +77,11 @@ navigateur. C'est la seule donnée visible sans connexion.
   En mode temps réel, le serveur génère un jeton éphémère limité à une session.
 - Le mot de passe unique application / console n'existe que si un superutilisateur porte le même e-mail qu'un membre ;
   les hooks alignent les deux mots de passe à chaque connexion et à chaque changement.
+- Notifications (`pb_hooks/notify.pb.js`, `notify.js`) : une tâche cron passe chaque minute et prévient par e-mail
+  les membres quand une pierre est posée, et l'auteur d'une pierre (plus ceux qui en discutent) quand un commentaire
+  arrive. Les champs masqués `retex.notified` et `comments.notified` servent de file d'attente : publier reste
+  instantané, plusieurs commentaires rapprochés donnent un seul e-mail, et rien n'est rejoué au-delà de 24 h.
+  Chaque membre peut couper ces e-mails (`users.mute_emails`, case dans « Mon compte »). Les gabarits sont des
+  fonctions pures de `notify.js`, dans la palette sable du thème clair. Le lien `#retex=<id>` ouvre la pierre.
 - La réinitialisation de mot de passe demande un canal d'envoi : l'API Brevo (`WECAIRN_BREVO_API_KEY`, hook `mail.pb.js`) ou un SMTP réglé dans la console.
 - Le micro exige HTTPS (ou `localhost`).

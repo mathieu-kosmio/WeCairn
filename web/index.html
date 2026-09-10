@@ -169,6 +169,8 @@
   form.new input, form.new textarea, .login input, .account input, .account textarea { width: 100%; padding: 9px 11px; border: 1px solid var(--line-strong); border-radius: var(--r-sm); font: inherit; background: var(--bg); color: var(--ink); }
   form.new textarea { min-height: 72px; resize: vertical; }
   .hint { font-size: 12px; color: var(--muted); }
+  label.check { display: flex; gap: 8px; align-items: baseline; margin-top: 12px; font-size: 14px; cursor: pointer; }
+  label.check input { width: auto; margin: 0; }
   .empty { color: var(--muted); text-align: center; padding: 40px 0; }
   dialog { border: 0; border-radius: var(--radius); padding: 26px 28px; width: min(600px, 92vw); box-shadow: 0 30px 80px rgba(0,0,0,.35); background: var(--card); color: var(--ink); }
   dialog h2 { margin: 0 0 2px; font-size: 26px; }
@@ -409,6 +411,7 @@
     <input id="aName" name="name" required maxlength="80">
     <label for="aEmail">Adresse e-mail</label>
     <input id="aEmail" name="email" disabled aria-describedby="aEmailHint"><span class="hint" id="aEmailHint">L'adresse ne peut pas être modifiée.</span>
+    <label class="check" for="aNotify"><input type="checkbox" id="aNotify" name="notify"> Recevoir les e-mails du cairn <span class="hint">(pierres posées par l'équipe, commentaires sous mes pierres)</span></label>
     <p class="hint" style="margin:10px 0 0">Changer de mot de passe <span id="accountPwdHint"></span></p>
     <label for="aOld">Mot de passe actuel</label>
     <input id="aOld" type="password" name="old" autocomplete="current-password" placeholder="Laisser vide pour ne pas changer">
@@ -472,7 +475,9 @@ const badgesFor = (r) => {
 const hot = (r) => (r.vote_count + 1) / Math.pow((Date.now() - new Date(r.created)) / 3600000 + 2, 1.5);
 const tagsOf = (r) => Array.isArray(r.tags) ? r.tags : [];
 
-const state = { user: null, org: null, sort: "hot", q: "", tag: null, open: new Set(), votes: new Map(), mode: "login", stones: -1, justPosed: false, freshId: null, editing: null };
+const state = { user: null, org: null, sort: "hot", q: "", tag: null, open: new Set(), votes: new Map(), mode: "login", stones: -1, justPosed: false, freshId: null, editing: null, jump: null };
+// Lien profond depuis un e-mail : #retex=<id> ouvre la pierre une fois le fil chargé
+{ const m = location.hash.match(/^#retex=([a-z0-9]+)$/i); if (m) { state.jump = m[1]; state.open.add(m[1]); history.replaceState(null, "", location.pathname + location.search); } }
 const PEBBLE = `<svg viewBox="0 0 56 44" aria-hidden="true"><path class="pebble" d="M6 30c-4-9 4-22 20-23s26 7 24 17-8 11-22 12S9 37 6 30z"/><path class="pebble-2" d="M12 28c-2-6 4-14 15-15s19 5 17 12-6 7-15 8-15 1-17-5z"/><circle class="chip" cx="44" cy="10" r="4"/></svg>`;
 
 function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 2500); }
@@ -610,6 +615,7 @@ function renderFeed(rows) {
     </article>`).join("");
   state.open.forEach(id => loadComments(id));
   state.freshId = null;
+  if (state.jump) { const el = feed.querySelector(`[data-id="${state.jump}"]`); state.jump = null; if (el) { el.classList.add("fresh"); el.scrollIntoView({ block: "center" }); } }
 }
 async function loadComments(id) {
   const box = document.querySelector(`[data-comments="${id}"]`); if (!box) return;
@@ -1025,7 +1031,7 @@ document.addEventListener("click", (e) => {
   const item = e.target.closest("[data-menu]"); if (!item) return;
   toggleMenu(false);
   if (item.dataset.menu === "account") {
-    const f = $("#formAccount"); f.name.value = state.user.name; f.email.value = state.user.email; f.old.value = ""; f.new.value = "";
+    const f = $("#formAccount"); f.name.value = state.user.name; f.email.value = state.user.email; f.old.value = ""; f.new.value = ""; f.notify.checked = !state.user.mute_emails;
     $("#dlgAccount").showModal();
   }
   if (item.dataset.menu === "org") {
@@ -1051,7 +1057,7 @@ $("#formOrg").addEventListener("submit", async (e) => {
 });
 $("#formAccount").addEventListener("submit", async (e) => {
   e.preventDefault();
-  const fd = new FormData(e.target), data = { name: String(fd.get("name")).trim() };
+  const fd = new FormData(e.target), data = { name: String(fd.get("name")).trim(), mute_emails: !fd.get("notify") };
   const oldPwd = fd.get("old"), newPwd = fd.get("new");
   if (newPwd || oldPwd) {
     if (!oldPwd || !newPwd) return toast("Indiquez le mot de passe actuel et le nouveau.");

@@ -9,15 +9,15 @@ Tout est défini dans `pocketbase/pb_schema.json`, importable depuis la console 
 `mistral`) et `ai_api_key` (champ masqué, jamais renvoyé par l'API, réglable depuis la console uniquement).
 
 **users** (auth) : `name`, `email` (visibilité désactivée pour les autres membres), `organisation` (relation, posée par le
-hook, jamais par le client).
+hook, jamais par le client), `mute_emails` (le membre coupe les notifications depuis « Mon compte »).
 
 **retex** : `organisation`, `author`, `title` (l'enseignement en une phrase, 5 à 140 caractères), `situation`,
 `learning`, `recommendation` (optionnel), `tags` (JSON, minuscules, dédoublonnés, 8 au plus, normalisés par le hook),
-`source` (`manual`, `mcp`, `transcript`), `source_ref`.
+`source` (`manual`, `mcp`, `transcript`), `source_ref`, `notified` (masqué, file d'attente des notifications).
 
 **votes** : `retex`, `user`. Index unique sur le couple : une personne ne cale une pierre qu'une fois.
 
-**comments** : `retex`, `author`, `body`.
+**comments** : `retex`, `author`, `body`, `notified` (masqué, file d'attente des notifications).
 
 ## Vues SQL
 

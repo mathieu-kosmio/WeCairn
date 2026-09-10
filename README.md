@@ -44,6 +44,10 @@ par date ou par votes ; la recherche et les tags filtrent. Les commentaires appo
 **Progresser ensemble.** Dix points par pierre, deux par calage reçu, un par calage donné, trois par commentaire.
 Cinq niveaux, d'Observateur à Pilier, une altitude qui grimpe, des badges, et « la cordée » : le classement de l'équipe.
 
+**Rester au courant.** Quand un membre pose une pierre, l'équipe reçoit un e-mail sobre avec l'essentiel ; quand
+quelqu'un commente une pierre, son auteur et ceux qui en discutent sont prévenus. Chacun peut couper ces e-mails
+depuis son compte.
+
 **Rester entre soi.** Chaque organisation est isolée : l'inscription rattache automatiquement l'utilisateur au domaine
 de son e-mail professionnel, et les règles d'accès sont appliquées par la base de données, pas par l'interface.
 L'équipe nomme son organisation et fixe les objectifs de son cairn.
