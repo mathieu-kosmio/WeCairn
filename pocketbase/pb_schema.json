@@ -1,0 +1,471 @@
+[
+  {
+    "id": "weretexorgs0001",
+    "name": "organisations",
+    "type": "base",
+    "system": false,
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "primaryKey": true,
+        "system": true,
+        "required": true,
+        "min": 15,
+        "max": 15,
+        "pattern": "^[a-z0-9]+$",
+        "autogeneratePattern": "[a-z0-9]{15}"
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "required": true,
+        "min": 1,
+        "max": 120,
+        "presentable": true
+      },
+      {
+        "name": "domain",
+        "type": "text",
+        "required": true,
+        "min": 3,
+        "max": 120,
+        "presentable": false
+      },
+      {
+        "name": "objectives",
+        "type": "text",
+        "required": false,
+        "min": 0,
+        "max": 2000,
+        "presentable": false
+      },
+      {
+        "name": "ai_provider",
+        "type": "select",
+        "required": false,
+        "maxSelect": 1,
+        "values": [
+          "openai",
+          "mistral"
+        ]
+      },
+      {
+        "name": "ai_api_key",
+        "type": "text",
+        "required": false,
+        "min": 0,
+        "max": 300,
+        "hidden": true
+      },
+      {
+        "name": "created",
+        "type": "autodate",
+        "onCreate": true,
+        "onUpdate": false
+      },
+      {
+        "name": "updated",
+        "type": "autodate",
+        "onCreate": true,
+        "onUpdate": true
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_org_domain ON organisations (domain)"
+    ],
+    "listRule": "id = @request.auth.organisation",
+    "viewRule": "id = @request.auth.organisation",
+    "createRule": null,
+    "updateRule": "@request.auth.id != \"\" && @request.auth.organisation = id && @request.body.domain:isset = false && @request.body.ai_provider:isset = false && @request.body.ai_api_key:isset = false",
+    "deleteRule": null
+  },
+  {
+    "id": "_pb_users_auth_",
+    "name": "users",
+    "type": "auth",
+    "system": false,
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "primaryKey": true,
+        "system": true,
+        "required": true,
+        "min": 15,
+        "max": 15,
+        "pattern": "^[a-z0-9]+$",
+        "autogeneratePattern": "[a-z0-9]{15}"
+      },
+      {
+        "name": "password",
+        "type": "password",
+        "system": true,
+        "hidden": true,
+        "required": true,
+        "min": 8,
+        "max": 0
+      },
+      {
+        "name": "tokenKey",
+        "type": "text",
+        "system": true,
+        "hidden": true,
+        "required": true,
+        "min": 30,
+        "max": 60,
+        "autogeneratePattern": "[a-zA-Z0-9]{50}"
+      },
+      {
+        "name": "email",
+        "type": "email",
+        "system": true,
+        "required": true
+      },
+      {
+        "name": "emailVisibility",
+        "type": "bool",
+        "system": true
+      },
+      {
+        "name": "verified",
+        "type": "bool",
+        "system": true
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "required": true,
+        "min": 1,
+        "max": 80,
+        "presentable": true
+      },
+      {
+        "name": "organisation",
+        "type": "relation",
+        "collectionId": "weretexorgs0001",
+        "required": false,
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1
+      },
+      {
+        "name": "created",
+        "type": "autodate",
+        "onCreate": true,
+        "onUpdate": false
+      },
+      {
+        "name": "updated",
+        "type": "autodate",
+        "onCreate": true,
+        "onUpdate": true
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_users_tokenKey ON users (tokenKey)",
+      "CREATE UNIQUE INDEX idx_users_email ON users (email) WHERE email != ''",
+      "CREATE INDEX idx_users_org ON users (organisation)"
+    ],
+    "listRule": "organisation = @request.auth.organisation",
+    "viewRule": "organisation = @request.auth.organisation",
+    "createRule": "@request.body.organisation:isset = false",
+    "updateRule": "id = @request.auth.id && @request.body.organisation:isset = false && @request.body.email:isset = false",
+    "deleteRule": null,
+    "manageRule": null,
+    "authRule": "",
+    "passwordAuth": {
+      "enabled": true,
+      "identityFields": [
+        "email"
+      ]
+    },
+    "otp": {
+      "enabled": true,
+      "duration": 300,
+      "length": 8,
+      "emailTemplate": {
+        "subject": "Votre code de connexion WeCairn",
+        "body": "<p>Bonjour,</p><p>Votre code de connexion WeCairn : <strong>{OTP}</strong></p><p>Il est valable 5 minutes.</p>"
+      }
+    },
+    "mfa": {
+      "enabled": false,
+      "duration": 1800,
+      "rule": ""
+    },
+    "oauth2": {
+      "enabled": false,
+      "providers": [],
+      "mappedFields": {
+        "id": "",
+        "name": "name",
+        "username": "",
+        "avatarURL": ""
+      }
+    },
+    "authToken": {
+      "duration": 1209600
+    },
+    "passwordResetToken": {
+      "duration": 1800
+    },
+    "emailChangeToken": {
+      "duration": 1800
+    },
+    "verificationToken": {
+      "duration": 259200
+    },
+    "fileToken": {
+      "duration": 180
+    }
+  },
+  {
+    "id": "weretexretex001",
+    "name": "retex",
+    "type": "base",
+    "system": false,
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "primaryKey": true,
+        "system": true,
+        "required": true,
+        "min": 15,
+        "max": 15,
+        "pattern": "^[a-z0-9]+$",
+        "autogeneratePattern": "[a-z0-9]{15}"
+      },
+      {
+        "name": "organisation",
+        "type": "relation",
+        "collectionId": "weretexorgs0001",
+        "required": true,
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1
+      },
+      {
+        "name": "author",
+        "type": "relation",
+        "collectionId": "_pb_users_auth_",
+        "required": true,
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1
+      },
+      {
+        "name": "title",
+        "type": "text",
+        "required": true,
+        "min": 5,
+        "max": 140,
+        "presentable": true
+      },
+      {
+        "name": "situation",
+        "type": "text",
+        "required": true,
+        "min": 10,
+        "max": 5000,
+        "presentable": false
+      },
+      {
+        "name": "learning",
+        "type": "text",
+        "required": true,
+        "min": 10,
+        "max": 5000,
+        "presentable": false
+      },
+      {
+        "name": "recommendation",
+        "type": "text",
+        "required": false,
+        "min": 0,
+        "max": 5000,
+        "presentable": false
+      },
+      {
+        "name": "tags",
+        "type": "json",
+        "maxSize": 2000
+      },
+      {
+        "name": "source",
+        "type": "select",
+        "required": true,
+        "maxSelect": 1,
+        "values": [
+          "manual",
+          "transcript",
+          "mcp"
+        ]
+      },
+      {
+        "name": "source_ref",
+        "type": "text",
+        "required": false,
+        "min": 0,
+        "max": 300,
+        "presentable": false
+      },
+      {
+        "name": "created",
+        "type": "autodate",
+        "onCreate": true,
+        "onUpdate": false
+      },
+      {
+        "name": "updated",
+        "type": "autodate",
+        "onCreate": true,
+        "onUpdate": true
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_retex_org_created ON retex (organisation, created)",
+      "CREATE INDEX idx_retex_author ON retex (author)"
+    ],
+    "listRule": "organisation = @request.auth.organisation",
+    "viewRule": "organisation = @request.auth.organisation",
+    "createRule": "@request.auth.id != \"\" && author = @request.auth.id && organisation = @request.auth.organisation",
+    "updateRule": "author = @request.auth.id && @request.body.author:isset = false && @request.body.organisation:isset = false",
+    "deleteRule": "author = @request.auth.id"
+  },
+  {
+    "id": "weretexvotes001",
+    "name": "votes",
+    "type": "base",
+    "system": false,
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "primaryKey": true,
+        "system": true,
+        "required": true,
+        "min": 15,
+        "max": 15,
+        "pattern": "^[a-z0-9]+$",
+        "autogeneratePattern": "[a-z0-9]{15}"
+      },
+      {
+        "name": "retex",
+        "type": "relation",
+        "collectionId": "weretexretex001",
+        "required": true,
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1
+      },
+      {
+        "name": "user",
+        "type": "relation",
+        "collectionId": "_pb_users_auth_",
+        "required": true,
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1
+      },
+      {
+        "name": "created",
+        "type": "autodate",
+        "onCreate": true,
+        "onUpdate": false
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_votes_unique ON votes (retex, user)"
+    ],
+    "listRule": "retex.organisation = @request.auth.organisation",
+    "viewRule": "retex.organisation = @request.auth.organisation",
+    "createRule": "@request.auth.id != \"\" && user = @request.auth.id && retex.organisation = @request.auth.organisation",
+    "updateRule": null,
+    "deleteRule": "user = @request.auth.id"
+  },
+  {
+    "id": "weretexcomms001",
+    "name": "comments",
+    "type": "base",
+    "system": false,
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "primaryKey": true,
+        "system": true,
+        "required": true,
+        "min": 15,
+        "max": 15,
+        "pattern": "^[a-z0-9]+$",
+        "autogeneratePattern": "[a-z0-9]{15}"
+      },
+      {
+        "name": "retex",
+        "type": "relation",
+        "collectionId": "weretexretex001",
+        "required": true,
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1
+      },
+      {
+        "name": "author",
+        "type": "relation",
+        "collectionId": "_pb_users_auth_",
+        "required": true,
+        "cascadeDelete": true,
+        "minSelect": 0,
+        "maxSelect": 1
+      },
+      {
+        "name": "body",
+        "type": "text",
+        "required": true,
+        "min": 1,
+        "max": 4000,
+        "presentable": false
+      },
+      {
+        "name": "created",
+        "type": "autodate",
+        "onCreate": true,
+        "onUpdate": false
+      },
+      {
+        "name": "updated",
+        "type": "autodate",
+        "onCreate": true,
+        "onUpdate": true
+      }
+    ],
+    "indexes": [
+      "CREATE INDEX idx_comments_retex ON comments (retex, created)"
+    ],
+    "listRule": "retex.organisation = @request.auth.organisation",
+    "viewRule": "retex.organisation = @request.auth.organisation",
+    "createRule": "@request.auth.id != \"\" && author = @request.auth.id && retex.organisation = @request.auth.organisation",
+    "updateRule": "author = @request.auth.id && @request.body.author:isset = false && @request.body.retex:isset = false",
+    "deleteRule": "author = @request.auth.id"
+  },
+  {
+    "id": "weretexfeed0001",
+    "name": "retex_feed",
+    "type": "view",
+    "system": false,
+    "viewQuery": "SELECT r.id, r.organisation, r.author, u.name AS author_name,\n  r.title, r.situation, r.learning, r.recommendation, r.tags, r.source, r.source_ref, r.created, r.updated,\n  (SELECT COUNT(*) FROM votes v WHERE v.retex = r.id) AS vote_count,\n  (SELECT COUNT(*) FROM comments c WHERE c.retex = r.id) AS comment_count\nFROM retex r JOIN users u ON u.id = r.author",
+    "listRule": "organisation = @request.auth.organisation",
+    "viewRule": "organisation = @request.auth.organisation"
+  },
+  {
+    "id": "weretexlead0001",
+    "name": "leaderboard",
+    "type": "view",
+    "system": false,
+    "viewQuery": "SELECT u.id, u.organisation, u.name,\n  (SELECT COUNT(*) FROM retex r WHERE r.author = u.id) AS retex_count,\n  (SELECT COUNT(*) FROM votes v JOIN retex r ON r.id = v.retex WHERE r.author = u.id) AS votes_received,\n  (SELECT COUNT(*) FROM votes v WHERE v.user = u.id) AS votes_given,\n  (SELECT COUNT(*) FROM comments c WHERE c.author = u.id) AS comments_count,\n  (10 * (SELECT COUNT(*) FROM retex r WHERE r.author = u.id)\n   + 2 * (SELECT COUNT(*) FROM votes v JOIN retex r ON r.id = v.retex WHERE r.author = u.id)\n   + 1 * (SELECT COUNT(*) FROM votes v WHERE v.user = u.id)\n   + 3 * (SELECT COUNT(*) FROM comments c WHERE c.author = u.id)) AS points\nFROM users u",
+    "listRule": "organisation = @request.auth.organisation",
+    "viewRule": "organisation = @request.auth.organisation"
+  }
+]

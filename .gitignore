@@ -1,0 +1,9 @@
+pb_data/
+pocketbase
+!pocketbase/
+pocketbase.exe
+node_modules/
+.local/
+.DS_Store
+_to_delete/
+Claude outputs/

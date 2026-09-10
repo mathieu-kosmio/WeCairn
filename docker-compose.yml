@@ -1,0 +1,21 @@
+# WeCairn sur Coolify : ressource « Docker Compose » pointée sur ce dépôt.
+# Coolify gère le domaine, le TLS et le reverse proxy ; ne pas exposer de port sur l'hôte.
+services:
+  wecairn:
+    build: .
+    restart: unless-stopped
+    environment:
+      # Coolify injecte le domaine de la ressource dans SERVICE_FQDN_WECAIRN_8090.
+      - SERVICE_FQDN_WECAIRN_8090
+      # Dictée vocale (optionnel) : à définir comme secrets dans Coolify
+      - WECAIRN_AI_PROVIDER=${WECAIRN_AI_PROVIDER:-}
+      - WECAIRN_AI_KEY=${WECAIRN_AI_KEY:-}
+    volumes:
+      - wecairn_data:/pb/pb_data
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+volumes:
+  wecairn_data:

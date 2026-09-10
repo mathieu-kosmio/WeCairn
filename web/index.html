@@ -1,0 +1,1276 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WeCairn</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Young+Serif&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/pocketbase@0.28.1/dist/pocketbase.umd.js"></script>
+<script>
+  // Thème mémorisé, appliqué avant le premier rendu pour éviter le flash
+  try { const t = localStorage.getItem("wecairn-theme"); if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; } catch (_) {}
+</script>
+<style>
+  /* ============================================================
+     Univers « Le Cairn » : chaque retex est une pierre posée sur le chemin
+     pour ceux qui suivent ; l'organisation érige son cairn. Thème sable le
+     jour, ardoise la nuit : réglage système par défaut, choix explicite mémorisé
+     dans data-theme (localStorage), mêmes jetons partout.
+     ============================================================ */
+  :root {
+    --bg: #ebe4d6; --card: #f8f4ec; --card-2: #f1ebdf; --ink: #2b2f36; --muted: #5c606a; --line: #d9d0bf; --line-strong: #857f71;
+    --accent: #e0743a; --accent-ink: #2b1a10; --accent-text: #9e4514; --focus: #9e4514;
+    --sky: #2f5c75; --sky-soft: #dbe7ee; --moss: #5f7a4b;
+    --stone: #c9c2b5; --stone-2: #aaa397; --stone-edge: #7d7768; --stone-ink: #2b2f36; --danger: #b8432b;
+    --radius: 6px 6px 22px 6px; --r-sm: 6px;
+    --serif: "Young Serif", "Iowan Old Style", Georgia, serif;
+    --font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    /* Le chemin vers l'horizon (scène d'accueil) : matin sur un sentier, estampe au lavis */
+    --scene-sky-top: #ebe4d6; --scene-sky-low: #f2e3cc; --scene-mist: #e3e0d6; --scene-ridge: #3d5f70;
+    --scene-ground: #b9b58e; --scene-grass: #7b905d; --scene-path: #f0e7d3; --scene-path-2: #d4c9b1;
+    --scene-sun: #e0743a; --scene-sun-a: .32; --scene-grain: .07;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #2b2f36; --card: #343940; --card-2: #3c4149; --ink: #e9e1d3; --muted: #a9b0b8; --line: #464c55; --line-strong: #8f969f;
+      --accent: #e0743a; --accent-ink: #2b1a10; --accent-text: #f39a68; --focus: #f39a68;
+      --sky: #bfd6e3; --sky-soft: #33424c; --moss: #8faa76;
+      --stone: #9aa0a8; --stone-2: #7a7f88; --stone-edge: #c9c2b5; --stone-ink: #2b2f36; --danger: #f08a6f;
+      /* Scène d'accueil : nuit claire sur l'ardoise, lune pâle */
+      --scene-sky-top: #2b2f36; --scene-sky-low: #3a4756; --scene-mist: #3e474f; --scene-ridge: #1b1f25;
+      --scene-ground: #454e45; --scene-grass: #5b6c4f; --scene-path: #70757c; --scene-path-2: #5c6168;
+      --scene-sun: #bfd6e3; --scene-sun-a: .55; --scene-grain: .05;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #2b2f36; --card: #343940; --card-2: #3c4149; --ink: #e9e1d3; --muted: #a9b0b8; --line: #464c55; --line-strong: #8f969f;
+      --accent: #e0743a; --accent-ink: #2b1a10; --accent-text: #f39a68; --focus: #f39a68;
+      --sky: #bfd6e3; --sky-soft: #33424c; --moss: #8faa76;
+      --stone: #9aa0a8; --stone-2: #7a7f88; --stone-edge: #c9c2b5; --stone-ink: #2b2f36; --danger: #f08a6f;
+      /* Scène d'accueil : nuit claire sur l'ardoise, lune pâle */
+      --scene-sky-top: #2b2f36; --scene-sky-low: #3a4756; --scene-mist: #3e474f; --scene-ridge: #1b1f25;
+      --scene-ground: #454e45; --scene-grass: #5b6c4f; --scene-path: #70757c; --scene-path-2: #5c6168;
+      --scene-sun: #bfd6e3; --scene-sun-a: .55; --scene-grain: .05;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { background: var(--bg); }
+  body { margin: 0; font: 15px/1.5 var(--font); color: var(--ink); background: var(--bg); }
+  @media (prefers-reduced-motion: no-preference) { body, header, .card, .btn, dialog, .toolbar input, .seg { transition: background-color .25s, color .25s, border-color .25s; } }
+  a { color: var(--sky); text-decoration: none; }
+  button { font: inherit; cursor: pointer; color: inherit; }
+  h1, h2, h3, h4 { font-family: var(--serif); font-weight: 400; letter-spacing: 0; text-wrap: balance; }
+  :focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .skip { position: absolute; left: 12px; top: -60px; z-index: 50; background: var(--ink); color: var(--bg); padding: 8px 12px; border-radius: var(--r-sm); }
+  .skip:focus { top: 10px; }
+
+  header { background: var(--bg); position: sticky; top: 0; z-index: 5; border-bottom: 1px solid var(--line); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+  header .wrap { display: flex; align-items: center; gap: 12px; height: 60px; }
+  @media (max-width: 640px) {
+    header .wrap { gap: 8px; }
+    header .lbl, header #orgName { display: none; }
+    .avatar { margin-right: 0; }
+    .btn.primary { border-radius: 6px 6px 14px 6px; }
+  }
+  .logo { font-family: var(--serif); font-size: 22px; display: inline-flex; align-items: center; gap: 8px; }
+  .logo svg { width: 26px; height: 26px; }
+  .logo span { color: var(--accent-text); }
+  h1.logo { margin: 0; font-weight: 400; }
+  .spacer { flex: 1; }
+  .btn { border: 1px solid var(--line-strong); background: var(--card); color: var(--ink); padding: 8px 14px; border-radius: var(--r-sm); transition: transform .12s, background .12s; }
+  .btn:hover { background: var(--card-2); }
+  .btn:active { transform: translateY(1px); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; border-radius: 6px 6px 14px 6px; }
+  .btn.primary:hover { background: #ea834c; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .btn.icon { width: 40px; height: 38px; padding: 0; display: inline-grid; place-items: center; color: var(--muted); }
+  .btn.icon:hover { color: var(--ink); }
+  .btn.icon svg { width: 20px; height: 20px; display: none; }
+  html:not([data-theme]) .btn.icon .t-auto, html[data-theme="light"] .btn.icon .t-light, html[data-theme="dark"] .btn.icon .t-dark { display: block; }
+
+  main .wrap { display: grid; grid-template-columns: 1fr 300px; gap: 24px; padding: 24px 20px 60px; }
+  main .wrap > section, main .wrap > aside, .retex > div { min-width: 0; }
+  .retex h2, .body dd, .comment { overflow-wrap: anywhere; }
+  @media (max-width: 800px) { main .wrap { grid-template-columns: 1fr; } }
+  .card { background: var(--card); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 14px; }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+  .toolbar input[type=search] { flex: 1; min-width: 160px; padding: 8px 12px; border: 1px solid var(--line-strong); border-radius: var(--r-sm); font: inherit; background: var(--card); color: var(--ink); }
+  .seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: var(--r-sm); overflow: hidden; background: var(--card); }
+  .seg button { border: 0; background: transparent; padding: 7px 12px; color: var(--muted); }
+  .seg button.on { background: var(--ink); color: var(--bg); }
+
+  /* ---- Carte retex : une pierre plate ---- */
+  .retex { display: grid; grid-template-columns: 64px 1fr; gap: 16px; transition: box-shadow .2s; }
+  .retex:hover { box-shadow: 0 14px 30px -22px rgba(0,0,0,.6); }
+  .vote { display: flex; flex-direction: column; align-items: center; gap: 0; }
+  .vote button { width: 60px; height: 52px; border: 0; background: none; padding: 0; position: relative; }
+  .vote button svg { width: 56px; height: 44px; display: block; transition: transform .15s; }
+  .vote button:hover svg { transform: translateY(-2px) scale(1.04); }
+  .vote button .pebble { fill: var(--stone); stroke: var(--stone-edge); stroke-width: 1.5; }
+  .vote button .pebble-2 { fill: var(--stone-2); }
+  .vote button.on .pebble { fill: var(--accent); }
+  .vote button.on .pebble-2 { fill: #c25f2b; }
+  .vote button .chip { fill: var(--accent); opacity: 0; }
+  .vote button.on .chip { opacity: 1; }
+  .vote b { font-family: var(--serif); font-size: 19px; font-variant-numeric: tabular-nums; line-height: 1; }
+  .vote small { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .retex h2 { margin: 0 0 6px; font-size: 20px; line-height: 1.2; }
+  .meta { color: var(--muted); font-size: 13px; display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+  .meta .who { color: var(--sky); }
+  .tag { display: inline-block; font: inherit; font-size: 12px; border: 1px solid var(--line-strong); color: var(--sky); border-radius: 999px; padding: 1px 10px; font-size: 12px; cursor: pointer; background: transparent; }
+  .tag:hover { border-color: var(--sky); }
+  .src { font-size: 11px; border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; color: var(--muted); text-transform: uppercase; letter-spacing: .3px; }
+  .body { margin-top: 12px; display: none; }
+  .retex.open .body { display: block; }
+  .body dl { margin: 0; display: grid; grid-template-columns: 1fr; gap: 10px; }
+  .body dt { color: var(--accent-text); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
+  .body dd { margin: 2px 0 0; white-space: pre-wrap; }
+  .comments { margin-top: 14px; border-top: 1px dashed var(--line); padding-top: 10px; }
+  .comment { font-size: 14px; margin-bottom: 6px; }
+  .comment b { font-weight: 600; }
+  .comments form { display: flex; gap: 8px; margin-top: 8px; }
+  .comments input { flex: 1; min-width: 0; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: var(--r-sm); font: inherit; background: var(--bg); color: var(--ink); }
+  .toggle { color: var(--muted); font-size: 13px; background: none; border: 0; padding: 0; margin-top: 10px; }
+  .actions { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: center; }
+  .toggle.danger { color: var(--danger); }
+  .toggle.danger.armed { font-weight: 600; text-decoration: underline; }
+  .objectives { margin: 10px 0 0; padding: 0 0 0 18px; text-align: left; font-size: 13px; }
+  .objectives li { margin: 2px 0; }
+  .obj-hint { margin: 0 0 8px; padding: 8px 10px; background: var(--card-2); border-radius: var(--r-sm); font-size: 13px; }
+  .obj-hint b { font-weight: 600; }
+  .toggle:hover { color: var(--ink); }
+
+  /* ---- Colonne latérale ---- */
+  aside h2 { margin: 0 0 10px; font-family: var(--font); font-size: 12px; text-transform: uppercase; letter-spacing: .12em; color: var(--muted); font-weight: 600; }
+  .cairn-card { text-align: center; padding-top: 14px; }
+  .cairn-card svg { width: 100%; max-width: 230px; height: auto; display: block; margin: 0 auto; }
+  .cairn-card h2 { margin-top: 0; }
+  .cairn-card .n { font-family: var(--serif); font-size: 20px; margin: 4px 0 0; }
+  .cairn-card .hint { margin: 2px 0 0; }
+  .stone-row { transform-origin: 50% 100%; }
+  .stone-row.mine .stone { fill: var(--accent); }
+  .lb { list-style: none; margin: 0; padding: 0; }
+  .lb li { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+  .lb li:last-child { border: 0; }
+  .rank { width: 22px; color: var(--muted); font-size: 13px; text-align: right; font-variant-numeric: tabular-nums; }
+  .lvl { font-size: 11px; color: var(--muted); }
+  .pts { margin-left: auto; font-family: var(--serif); font-variant-numeric: tabular-nums; }
+  .me { background: var(--sky-soft); margin: 0 -8px; padding: 7px 8px !important; border-radius: var(--r-sm); }
+  .me-name { font-family: var(--serif); font-size: 19px; }
+  .alt { color: var(--sky); font-size: 13px; }
+  .bar { height: 6px; border-radius: 3px; background: var(--line); margin: 8px 0 4px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--accent); border-radius: 3px; transition: width .6s ease-out; }
+  .badges span { display: inline-block; font-size: 12px; border: 1px solid var(--line); color: var(--ink); border-radius: 999px; padding: 2px 9px; margin: 2px 4px 2px 0; }
+
+  form.new label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 4px; }
+  form.new input, form.new textarea, .login input, .account input, .account textarea { width: 100%; padding: 9px 11px; border: 1px solid var(--line-strong); border-radius: var(--r-sm); font: inherit; background: var(--bg); color: var(--ink); }
+  form.new textarea { min-height: 72px; resize: vertical; }
+  .hint { font-size: 12px; color: var(--muted); }
+  .empty { color: var(--muted); text-align: center; padding: 40px 0; }
+  dialog { border: 0; border-radius: var(--radius); padding: 26px 28px; width: min(600px, 92vw); box-shadow: 0 30px 80px rgba(0,0,0,.35); background: var(--card); color: var(--ink); }
+  dialog h2 { margin: 0 0 2px; font-size: 26px; }
+  dialog .sub { margin: 0 0 14px; }
+  dialog::backdrop { background: rgba(43,47,54,.6); }
+  .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+  /* ---- Accueil : le chemin vers l'horizon, une scène WebGL plein écran derrière le texte et la connexion ---- */
+  .landing-view { position: relative; isolation: isolate; overflow: hidden; margin-top: -61px; padding-top: 61px; min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; }
+  .scene { position: absolute; inset: 0; z-index: -1; background: linear-gradient(var(--scene-sky-top), var(--scene-mist) 45%, var(--scene-ground)); }
+  .scene canvas { display: block; width: 100%; height: 100%; }
+  body:has(#viewLogin:not([hidden])) header { background: color-mix(in srgb, var(--bg) 66%, transparent); border-bottom-color: color-mix(in srgb, var(--line) 50%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+  .landing-view > .wrap { flex: 1; display: flex; width: 100%; padding: 0 20px; }
+  .landing { flex: 1; display: grid; grid-template-columns: 1.4fr 1fr; grid-template-rows: auto minmax(300px, 1fr); grid-template-areas: "intro login" "road road"; gap: 24px 36px; align-items: start; padding: 28px 0 32px; }
+  .landing .intro { grid-area: intro; } .landing .login { grid-area: login; }
+  .landing .horizon { grid-area: road; align-self: stretch; display: flex; flex-direction: column; justify-content: flex-end; }
+  @media (max-width: 860px) { .landing { grid-template-columns: 1fr; grid-template-rows: auto auto minmax(280px, 1fr); grid-template-areas: "intro" "login" "road"; } }
+  .frost { background: color-mix(in srgb, var(--card) 68%, transparent); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+  .intro { padding: 20px 24px; border-radius: var(--radius); }
+  .intro h2 { font-size: clamp(28px, 3.4vw, 38px); line-height: 1.1; margin: 0 0 12px; }
+  .intro p.lead { margin: 0; max-width: 52ch; color: var(--muted); font-size: 16px; }
+  .landing .login { box-shadow: 0 30px 60px -34px rgba(0,0,0,.5); }
+  .horizon-wrap { flex: 1; min-height: 240px; }
+  .horizon-stage { position: absolute; inset: 0; z-index: 0; overflow: visible; pointer-events: none; }
+  .horizon-stage .day { pointer-events: auto; cursor: default; }
+  .horizon-stage .day:focus-visible { outline: none; }
+  .horizon-stage .day:focus-visible .halo, .horizon-stage .day:hover .halo { opacity: 1; }
+  .horizon-stage .halo { opacity: 0; fill: none; stroke: var(--focus); stroke-width: 2; }
+  .horizon-stage .today .stone { fill: url(#gLichen); }
+  .tip { position: absolute; z-index: 4; pointer-events: none; background: var(--ink); color: var(--bg); padding: 8px 11px; border-radius: 6px 6px 14px 6px; font-size: 13px; max-width: 240px; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
+  .tip b { font-family: var(--serif); font-weight: 400; font-size: 15px; display: block; }
+  .tip .tags { margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .tip .tags span { border: 1px solid color-mix(in srgb, var(--bg) 40%, transparent); border-radius: 999px; padding: 0 7px; font-size: 12px; }
+  .horizon-legend { position: relative; z-index: 1; align-self: flex-start; display: inline-flex; flex-wrap: wrap; gap: 6px 18px; padding: 8px 14px; border-radius: var(--r-sm); font-size: 13px; color: var(--muted); }
+  .horizon-legend b { font-family: var(--serif); font-weight: 400; color: var(--ink); font-size: 17px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .horizon-stage .day { animation: settle .6s cubic-bezier(.16,1,.3,1) both; transform-box: fill-box; transform-origin: 50% 100%; }
+  }
+  .login { max-width: 440px; margin: 0 auto; padding: 28px 30px; }
+  .login h2 { margin: 0 0 4px; font-size: 30px; }
+  .login label { display: block; font-size: 13px; color: var(--muted); }
+  .login input { margin: 4px 0 12px; }
+  .login .links { display: flex; justify-content: space-between; margin-top: 10px; font-size: 13px; }
+  .login .links button { background: none; border: 0; color: var(--sky); padding: 0; }
+  .login-cairn { display: block; width: 120px; height: auto; margin: 0 auto 8px; }
+  .menu { position: relative; }
+  .avatar { display: inline-flex; width: 24px; height: 24px; border-radius: 50% 50% 45% 55% / 55% 45% 55% 45%; background: var(--stone); color: var(--stone-ink); font-size: 11px; font-weight: 700; align-items: center; justify-content: center; margin-right: 6px; vertical-align: middle; }
+  .dropdown { position: absolute; right: 0; top: calc(100% + 6px); min-width: 240px; background: var(--card); border: 1px solid var(--line); border-radius: var(--r-sm); box-shadow: 0 12px 32px rgba(0,0,0,.25); padding: 6px; z-index: 20; }
+  .dropdown .dd-head { padding: 8px 10px 10px; border-bottom: 1px solid var(--line); margin-bottom: 4px; font-size: 14px; }
+  .dropdown button, .dropdown a { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 8px 10px; border-radius: 4px; color: var(--ink); font-size: 14px; }
+  .dropdown button:hover, .dropdown a:hover { background: var(--card-2); }
+  .dropdown hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
+  .account label { display: block; font-size: 13px; color: var(--muted); margin: 10px 0 4px; }
+  .account pre { background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 10px 12px; font-size: 12px; overflow-x: auto; margin: 8px 0; }
+  .dictate { border: 1px dashed var(--line); border-radius: var(--r-sm); padding: 12px 14px; margin-bottom: 6px; background: var(--card-2); }
+  .dictate-head { display: flex; gap: 12px; align-items: flex-start; }
+  .dictate-head .btn { white-space: nowrap; }
+  .dictate .btn.rec { background: var(--danger); border-color: var(--danger); color: #fff; }
+  .dictate .btn.busy { opacity: .6; pointer-events: none; }
+  .live-log { margin-top: 10px; max-height: 150px; overflow-y: auto; font-size: 13px; border-top: 1px dashed var(--line); padding-top: 8px; }
+  .live-log p { margin: 0 0 4px; }
+  .live-log .ai { color: var(--sky); }
+  .live-log .you { color: var(--ink); }
+  .ai-q { margin-top: 10px; padding: 8px 10px; background: var(--bg); border-left: 3px solid var(--accent); border-radius: 0 var(--r-sm) var(--r-sm) 0; font-size: 14px; }
+  .ai-q b { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: .1em; color: var(--accent-text); margin-bottom: 4px; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 6px 6px 14px 6px; font-size: 14px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 30; }
+  .toast.show { opacity: 1; }
+
+  /* ---- Mouvement : les pierres se posent, les cailloux calent ---- */
+  @media (prefers-reduced-motion: no-preference) {
+    .stone-row { animation: settle .55s cubic-bezier(.16,1,.3,1) both; }
+    .stone-row.mine.new { animation: land .8s cubic-bezier(.16,1,.3,1) both; }
+    .vote button.settle svg { animation: cale .45s ease-out; }
+    .retex.fresh { animation: rise .6s ease-out both; }
+    .bar i { transition: width .6s ease-out; }
+  }
+  @keyframes settle { from { opacity: 0; transform: translateY(-18px) scaleX(.96); } to { opacity: 1; transform: none; } }
+  @keyframes land { 0% { opacity: 0; transform: translateY(-60px) rotate(-5deg); } 70% { opacity: 1; transform: translateY(0) rotate(0) scale(1.03, .94); } 100% { transform: none; } }
+  @keyframes cale { 0% { transform: translateY(-10px) rotate(-8deg); } 70% { transform: translateY(0) rotate(0) scale(1.06, .92); } 100% { transform: none; } }
+  @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+
+<a class="skip" href="#main">Aller au contenu</a>
+<header><div class="wrap">
+  <h1 class="logo"><svg viewBox="0 0 26 26" aria-hidden="true"><path d="M2 22c-1-3 3-7 11-7s12 3 11 6-4 3-11 3-10 1-11-2z" fill="currentColor" opacity=".45"/><path d="M5 15c-1-3 3-6 8-6s9 2 8 5-3 3-8 3-7 1-8-2z" fill="currentColor" opacity=".7"/><path d="M8 9c0-2 2-4 5-4s5 2 5 3-2 3-5 3-5 0-5-2z" fill="#e0743a"/></svg>We<span>Cairn</span></h1>
+  <div class="hint" id="orgName"></div>
+  <div class="spacer"></div>
+  <button class="btn primary" id="btnNew" hidden aria-label="Poser une pierre">+ <span class="lbl">Poser une pierre</span></button>
+  <button class="btn icon" id="btnTheme" type="button" aria-label="Thème : automatique" title="Thème : automatique">
+    <svg class="t-auto" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 3.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg>
+    <svg class="t-light" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="3.8" fill="currentColor"/><g stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M10 2v2M10 16v2M2 10h2M16 10h2M4.3 4.3l1.4 1.4M14.3 14.3l1.4 1.4M4.3 15.7l1.4-1.4M14.3 5.7l1.4-1.4"/></g></svg>
+    <svg class="t-dark" viewBox="0 0 20 20" aria-hidden="true"><path d="M15.5 12.5A6.5 6.5 0 0 1 7.5 4.5a6.5 6.5 0 1 0 8 8z" fill="currentColor"/></svg>
+  </button>
+  <div class="menu" id="userMenu" hidden>
+    <button class="btn" id="btnMenu" aria-haspopup="true" aria-expanded="false" aria-controls="dropdown"><span class="avatar" id="avatar"></span><span class="lbl" id="menuName"></span><span class="lbl"> ▾</span></button>
+    <div class="dropdown" id="dropdown" hidden>
+      <div class="dd-head"><b id="ddName"></b><br><span class="hint" id="ddEmail"></span></div>
+      <button type="button" data-menu="account">Mon compte</button>
+      <button type="button" data-menu="org">Notre cairn (organisation)</button>
+      <button type="button" data-menu="mcp">Connecter Claude (MCP)</button>
+      <a id="adminLink" href="/_/" target="_blank" rel="noopener" hidden>Console d'administration ↗</a>
+      <hr>
+      <button type="button" id="btnLogout">Déconnexion</button>
+    </div>
+  </div>
+</div></header>
+
+<main id="main">
+  <!-- Connexion / inscription -->
+  <section id="viewLogin" class="landing-view" hidden>
+    <!-- Le paysage (ciel, montagnes, sentier, herbe) est peint en WebGL ; les cairns, interactifs, sont en SVG par-dessus -->
+    <div class="scene" aria-hidden="true"><canvas id="sceneCanvas"></canvas></div>
+    <div class="wrap"><div class="landing">
+      <div class="intro frost">
+        <h2>Chaque retex est une pierre posée pour ceux qui suivent.</h2>
+        <p class="lead">Les équipes qui utilisent WeCairn partagent leurs retours d'expérience et érigent, jour après jour, des cairns au bord du chemin. Sur ce chemin, seuls le nombre de pierres et les thèmes du jour sont visibles : jamais les équipes ni les textes.</p>
+      </div>
+      <div class="horizon">
+        <div class="horizon-wrap" id="horizonWrap">
+          <div id="horizon"></div>
+          <div class="tip" id="horizonTip" hidden></div>
+        </div>
+        <div class="horizon-legend frost" id="horizonLegend"></div>
+      </div>
+      <div class="card login">
+        <h2 id="loginTitle">Se connecter</h2>
+        <p class="hint" style="margin:0 0 14px">Votre organisation est déduite du domaine de votre adresse e-mail professionnelle.</p>
+        <form id="formLogin">
+          <label id="wrapName" hidden>Prénom et nom<input type="text" id="loginName" maxlength="80" placeholder="Prénom Nom"></label>
+          <label>Adresse e-mail professionnelle<input type="email" id="loginEmail" required placeholder="prenom@entreprise.fr" autocomplete="username"></label>
+          <label>Mot de passe<input type="password" id="loginPwd" required minlength="8" placeholder="8 caractères minimum" autocomplete="current-password"></label>
+          <button class="btn primary" type="submit" style="width:100%" id="loginSubmit">Se connecter</button>
+        </form>
+        <div class="links">
+          <button type="button" id="toggleMode">Créer un compte</button>
+          <button type="button" id="forgot">Mot de passe oublié</button>
+        </div>
+        <p class="hint" id="loginMsg" role="alert"></p>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- Application -->
+  <div class="wrap" id="viewApp" hidden>
+    <section>
+      <div class="toolbar">
+        <div class="seg" id="sort" role="group" aria-label="Trier les retex">
+          <button data-sort="hot" class="on" aria-pressed="true">Tendances</button>
+          <button data-sort="new" aria-pressed="false">Récents</button>
+          <button data-sort="top" aria-pressed="false">Les plus votés</button>
+        </div>
+        <input type="search" id="q" placeholder="Rechercher un retex, un mot-clé…" aria-label="Rechercher un retex">
+        <span id="tagFilter" hidden><span class="tag" id="tagFilterLabel"></span> <button class="toggle" id="tagClear" aria-label="Retirer le filtre par tag">✕</button></span>
+      </div>
+      <div id="feed"></div>
+    </section>
+
+    <aside aria-label="Votre progression et votre équipe">
+      <div class="card cairn-card" id="cairnCard"></div>
+      <div class="card" id="meCard"></div>
+      <div class="card">
+        <h2>La cordée</h2>
+        <ol class="lb" id="leaderboard"></ol>
+      </div>
+      <div class="card">
+        <h2>Tags</h2>
+        <div id="tagCloud"></div>
+      </div>
+      <div class="card">
+        <h2>Poser des pierres depuis Claude</h2>
+        <p class="hint" style="margin:0">Connectez le serveur MCP WeCairn à Claude pour publier un retex depuis une conversation ou extraire les enseignements d'un compte rendu de réunion. Il utilise votre e-mail et votre mot de passe WeCairn.</p>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<!-- Nouveau retex -->
+<dialog id="dlgNew" aria-labelledby="dlgNewTitle">
+  <h2 id="dlgNewTitle">Poser une pierre</h2>
+  <p class="hint sub">Un retex pour ceux qui passeront après vous : ce qui s'est passé, ce que vous en retenez, ce que vous feriez autrement.</p>
+  <div class="dictate" id="realtime" hidden>
+    <div class="dictate-head">
+      <button class="btn" type="button" id="btnLive">🎙 Raconter à l'IA</button>
+      <span class="hint" id="liveStatus" role="status">Un entretien vocal de deux minutes : racontez ce qui s'est passé, l'IA vous relance si besoin puis remplit le formulaire. Vous relisez avant de publier.</span>
+    </div>
+    <div id="liveLog" class="live-log" aria-live="polite" hidden></div>
+    <audio id="liveAudio" autoplay hidden></audio>
+  </div>
+  <div class="dictate" id="dictate" hidden>
+    <div class="dictate-head">
+      <button class="btn" type="button" id="btnRec">🎙 Raconter à l'oral</button>
+      <span class="hint" id="recStatus" role="status">Décrivez la situation, ce que vous en avez appris, et ce que vous feriez différemment. L'IA remplit le formulaire, vous relisez avant de publier.</span>
+    </div>
+    <div id="aiQuestions" role="status" hidden></div>
+    <details id="transcriptBox" hidden><summary class="hint" style="cursor:pointer">Voir la transcription</summary><p class="hint" id="transcriptText" style="white-space:pre-wrap;margin:6px 0 0"></p></details>
+  </div>
+  <form class="new" id="formNew" method="dialog">
+    <div class="obj-hint" id="objHint" hidden></div>
+    <p class="hint" style="margin:6px 0 0">Les champs marqués d'un astérisque sont obligatoires.</p>
+    <label for="fTitle">Titre * <span class="hint">(une phrase, l'enseignement en une ligne)</span></label>
+    <input id="fTitle" name="title" required minlength="5" maxlength="140" placeholder="Ex. Toujours cadrer le périmètre de données avant l'atelier" autofocus>
+    <label for="fSituation">Situation * <span class="hint">(le contexte : projet, réunion, problème rencontré)</span></label>
+    <textarea id="fSituation" name="situation" required minlength="10"></textarea>
+    <label for="fLearning">Ce qu'on a appris *</label>
+    <textarea id="fLearning" name="learning" required minlength="10"></textarea>
+    <label for="fReco">Bonne pratique à reproduire <span class="hint">(optionnel)</span></label>
+    <textarea id="fReco" name="recommendation"></textarea>
+    <label for="fTags">Tags <span class="hint">(séparés par des virgules)</span></label>
+    <input id="fTags" name="tags" placeholder="atelier, données, client">
+    <div class="row">
+      <button class="btn" type="button" id="btnCancel">Annuler</button>
+      <button class="btn primary" type="submit" id="btnSubmitNew">Poser la pierre</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Notre cairn : nom et objectifs de l'organisation -->
+<dialog id="dlgOrg" aria-labelledby="dlgOrgTitle">
+  <h2 id="dlgOrgTitle">Notre cairn</h2>
+  <p class="hint sub">Le nom de votre organisation et les objectifs du cairn : ce que l'équipe cherche à apprendre ensemble. Ils guident chacun au moment de poser une pierre. Tout membre peut les ajuster.</p>
+  <form class="account" id="formOrg" method="dialog">
+    <label for="oName">Nom de l'organisation</label>
+    <input id="oName" name="name" required maxlength="120" placeholder="Ex. Kosmio">
+    <label for="oObjectives">Objectifs du cairn <span class="hint">(un par ligne, cinq au plus)</span></label>
+    <textarea id="oObjectives" name="objectives" rows="4" maxlength="2000" placeholder="Alimenter notre démarche numérique responsable&#10;Partager l'expérience de la communauté sur la mise en place du label X"></textarea>
+    <div class="row">
+      <button class="btn" type="button" data-close="dlgOrg">Annuler</button>
+      <button class="btn primary" type="submit">Enregistrer</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Mon compte -->
+<dialog id="dlgAccount" aria-labelledby="dlgAccountTitle">
+  <h2 id="dlgAccountTitle">Mon compte</h2><p class="hint sub">Votre nom tel qu'il apparaît sur vos pierres, et votre mot de passe.</p>
+  <form class="account" id="formAccount" method="dialog">
+    <label for="aName">Nom affiché</label>
+    <input id="aName" name="name" required maxlength="80">
+    <label for="aEmail">Adresse e-mail</label>
+    <input id="aEmail" name="email" disabled aria-describedby="aEmailHint"><span class="hint" id="aEmailHint">L'adresse ne peut pas être modifiée.</span>
+    <p class="hint" style="margin:10px 0 0">Changer de mot de passe <span id="accountPwdHint"></span></p>
+    <label for="aOld">Mot de passe actuel</label>
+    <input id="aOld" type="password" name="old" autocomplete="current-password" placeholder="Laisser vide pour ne pas changer">
+    <label for="aNew">Nouveau mot de passe</label>
+    <input id="aNew" type="password" name="new" minlength="8" autocomplete="new-password" placeholder="8 caractères minimum">
+    <div class="row">
+      <button class="btn" type="button" data-close="dlgAccount">Annuler</button>
+      <button class="btn primary" type="submit">Enregistrer</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Connecter Claude -->
+<dialog id="dlgMcp" aria-labelledby="dlgMcpTitle">
+  <h2 id="dlgMcpTitle">Connecter Claude (MCP)</h2><p class="hint sub">Poser des pierres depuis une conversation ou un compte rendu de réunion.</p>
+  <div class="account">
+    <p class="hint" style="margin:0 0 8px">Le serveur MCP WeCairn permet de publier un retex depuis une conversation Claude ou d'extraire les enseignements d'un compte rendu de réunion. Il se connecte avec votre e-mail et votre mot de passe WeCairn et ne voit que votre organisation.</p>
+    <p class="hint" style="margin:0 0 4px">1. Sur votre poste : <code>cd WeCairn/mcp && npm install</code></p>
+    <p class="hint" style="margin:0 0 4px">2. Dans Claude Desktop (<code>claude_desktop_config.json</code>) ou Claude Code :</p>
+    <pre id="mcpSnippet"></pre>
+    <div class="row">
+      <button class="btn" type="button" id="btnCopyMcp">Copier</button>
+      <button class="btn primary" type="button" data-close="dlgMcp">Fermer</button>
+    </div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+/* ============================================================
+   Configuration : URL de l'instance PocketBase.
+   Par défaut, la page est servie par PocketBase lui-même (pb_public/),
+   donc l'URL courante convient. Sinon, renseignez window.WECAIRN_URL.
+   La sécurité repose sur les règles d'accès des collections, pas sur cette page.
+   ============================================================ */
+const WECAIRN_URL = window.WECAIRN_URL || location.origin;
+
+const pb = new PocketBase(WECAIRN_URL);
+pb.autoCancellation(false);
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const q = (s) => String(s).replace(/["\\]/g, "");
+
+const LEVELS = [
+  [0, "Observateur"], [20, "Contributeur"], [60, "Passeur"], [150, "Mentor"], [400, "Pilier"]
+];
+const levelFor = (pts) => LEVELS.filter(([min]) => pts >= min).pop()[1];
+const badgesFor = (r) => {
+  const b = [];
+  if (r.retex_count >= 1)   b.push("Premier retex");
+  if (r.retex_count >= 5)   b.push("5 retex");
+  if (r.retex_count >= 20)  b.push("20 retex");
+  if (r.votes_received >= 10) b.push("Utile x10");
+  if (r.votes_received >= 50) b.push("Utile x50");
+  if (r.votes_given >= 20)  b.push("Bon public");
+  if (r.comments_count >= 10) b.push("Discutant");
+  return b;
+};
+// Score « tendance » façon reddit : votes pondérés par l'ancienneté
+const hot = (r) => (r.vote_count + 1) / Math.pow((Date.now() - new Date(r.created)) / 3600000 + 2, 1.5);
+const tagsOf = (r) => Array.isArray(r.tags) ? r.tags : [];
+
+const state = { user: null, org: null, sort: "hot", q: "", tag: null, open: new Set(), votes: new Map(), mode: "login", stones: -1, justPosed: false, freshId: null, editing: null };
+const PEBBLE = `<svg viewBox="0 0 56 44" aria-hidden="true"><path class="pebble" d="M6 30c-4-9 4-22 20-23s26 7 24 17-8 11-22 12S9 37 6 30z"/><path class="pebble-2" d="M12 28c-2-6 4-14 15-15s19 5 17 12-6 7-15 8-15 1-17-5z"/><circle class="chip" cx="44" cy="10" r="4"/></svg>`;
+
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 2500); }
+function timeAgo(iso) {
+  const s = (Date.now() - new Date(iso)) / 1000;
+  if (s < 3600) return `il y a ${Math.max(1, Math.round(s/60))} min`;
+  if (s < 86400) return `il y a ${Math.round(s/3600)} h`;
+  if (s < 86400*30) return `il y a ${Math.round(s/86400)} j`;
+  return new Date(iso).toLocaleDateString("fr-FR");
+}
+const errMsg = (e) => {
+  const d = e?.response?.data; const first = d && Object.values(d)[0]?.message;
+  return first || e?.response?.message || e?.message || String(e);
+};
+
+/* ---------- Auth ---------- */
+async function boot() {
+  if (pb.authStore.isValid) {
+    try { await pb.collection("users").authRefresh(); } catch (_) { pb.authStore.clear(); }
+  }
+  await setSession();
+  pb.authStore.onChange(() => setSession());
+}
+let subscribed = false;
+async function setSession() {
+  state.user = pb.authStore.isValid ? pb.authStore.record : null;
+  $("#viewLogin").hidden = !!state.user;
+  $("#viewApp").hidden = !state.user;
+  $("#btnNew").hidden = $("#userMenu").hidden = !state.user;
+  if (!state.user) { $("#orgName").textContent = ""; loadHorizon(); return; }
+  renderMenu();
+  try { state.org = await pb.collection("organisations").getOne(state.user.organisation); } catch (_) { state.org = null; }
+  $("#orgName").textContent = state.org?.name ?? "";
+  refresh();
+  loadAiConfig();
+  if (!subscribed) {
+    subscribed = true;
+    // Temps réel : toute publication, vote ou commentaire dans l'organisation rafraîchit la page
+    for (const c of ["retex", "votes", "comments"]) pb.collection(c).subscribe("*", () => refresh()).catch(() => {});
+  }
+}
+$("#toggleMode").addEventListener("click", () => {
+  state.mode = state.mode === "login" ? "signup" : "login";
+  const signup = state.mode === "signup";
+  $("#wrapName").hidden = !signup; $("#loginName").required = signup;
+  $("#loginTitle").textContent = signup ? "Créer un compte" : "Se connecter";
+  $("#loginSubmit").textContent = signup ? "Créer mon compte" : "Se connecter";
+  $("#toggleMode").textContent = signup ? "J'ai déjà un compte" : "Créer un compte";
+  $("#loginPwd").autocomplete = signup ? "new-password" : "current-password";
+  $("#loginMsg").textContent = "";
+});
+$("#formLogin").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = $("#loginEmail").value.trim(), password = $("#loginPwd").value;
+  $("#loginMsg").textContent = "";
+  try {
+    if (state.mode === "signup") {
+      await pb.collection("users").create({ email, password, passwordConfirm: password, name: $("#loginName").value.trim() });
+    }
+    await pb.collection("users").authWithPassword(email, password);
+  } catch (err) { $("#loginMsg").textContent = "Erreur : " + errMsg(err); }
+});
+$("#forgot").addEventListener("click", async () => {
+  const email = $("#loginEmail").value.trim();
+  if (!email) return $("#loginMsg").textContent = "Indiquez d'abord votre adresse e-mail.";
+  try { await pb.collection("users").requestPasswordReset(email); $("#loginMsg").textContent = "Si un compte existe, un e-mail de réinitialisation a été envoyé."; }
+  catch (err) { $("#loginMsg").textContent = "Erreur : " + errMsg(err); }
+});
+$("#btnLogout").addEventListener("click", () => { pb.authStore.clear(); location.reload(); });
+
+/* ---------- Données ---------- */
+async function loadVotes() {
+  const votes = await pb.collection("votes").getFullList({ filter: `user = "${state.user.id}"`, fields: "id,retex" });
+  state.votes = new Map(votes.map(v => [v.retex, v.id]));
+}
+async function loadFeed() {
+  await loadVotes();
+  let filter = "";
+  if (state.q.trim()) {
+    const words = state.q.trim().split(/\s+/).map(q).filter(w => w.length >= 2);
+    filter = words.map(w => `(title ~ "${w}" || situation ~ "${w}" || learning ~ "${w}" || recommendation ~ "${w}" || tags ~ "${w}")`).join(" && ");
+  } else if (state.tag) {
+    filter = `tags ~ "${q(state.tag)}"`;
+  }
+  let rows = (await pb.collection("retex_feed").getList(1, 200, { filter, sort: state.sort === "top" ? "-vote_count,-created" : "-created" })).items;
+  if (state.tag && !state.q.trim()) rows = rows.filter(r => tagsOf(r).includes(state.tag));
+  if (state.sort === "hot" && !state.q.trim()) rows.sort((a, b) => hot(b) - hot(a));
+  renderFeed(rows);
+  renderTagCloud(rows);
+}
+async function loadLeaderboard() {
+  const rows = (await pb.collection("leaderboard").getList(1, 15, { sort: "-points,name" })).items;
+  renderLeaderboard(rows);
+}
+let refreshing = false, again = false;
+async function refresh() {
+  if (refreshing) { again = true; return; }
+  refreshing = true;
+  try { await Promise.all([loadFeed(), loadLeaderboard(), loadCairn()]); } catch (e) { toast(errMsg(e)); }
+  refreshing = false;
+  if (again) { again = false; refresh(); }
+}
+
+/* ---------- Rendu ---------- */
+function renderFeed(rows) {
+  const feed = $("#feed");
+  if (!rows.length) { feed.innerHTML = `<div class="card empty">Aucune pierre sur ce chemin pour l'instant. Posez la première.</div>`; return; }
+  feed.innerHTML = rows.map(r => `
+    <article class="card retex ${state.open.has(r.id) ? "open" : ""} ${state.freshId === r.id ? "fresh" : ""}" data-id="${r.id}">
+      <div class="vote">
+        <button class="${state.votes.has(r.id) ? "on" : ""}" data-vote="${r.id}" title="${state.votes.has(r.id) ? "Retirer mon caillou" : "Caler cette pierre : utile"}" aria-pressed="${state.votes.has(r.id)}" aria-label="Utile">${PEBBLE}</button>
+        <b>${r.vote_count}</b><small>${r.vote_count > 1 ? "calages" : "calage"}</small>
+      </div>
+      <div>
+        <h2>${esc(r.title)}</h2>
+        <div class="meta">
+          <span>Posée par <span class="who">${esc(r.author_name)}</span></span><span>·</span><span>${timeAgo(r.created)}</span>
+          ${r.source !== "manual" ? `<span class="src">${r.source === "transcript" ? "réunion" : "via claude"}</span>` : ""}
+          ${tagsOf(r).map(t => `<button type="button" class="tag" data-tag="${esc(t)}" aria-label="Filtrer par le tag ${esc(t)}">${esc(t)}</button>`).join("")}
+          <span>· ${r.comment_count} commentaire${r.comment_count > 1 ? "s" : ""}</span>
+        </div>
+        <div class="body">
+          <dl>
+            <dt>Situation</dt><dd>${esc(r.situation)}</dd>
+            <dt>Ce qu'on a appris</dt><dd>${esc(r.learning)}</dd>
+            ${r.recommendation ? `<dt>Bonne pratique</dt><dd>${esc(r.recommendation)}</dd>` : ""}
+            ${r.source_ref ? `<dt>Source</dt><dd class="hint">${esc(r.source_ref)}</dd>` : ""}
+          </dl>
+          <div class="comments" data-comments="${r.id}"><span class="hint">Chargement…</span></div>
+        </div>
+        <div class="actions">
+          <button class="toggle" data-open="${r.id}" aria-expanded="${state.open.has(r.id)}">${state.open.has(r.id) ? "Réduire" : "Lire le retex"}</button>
+          ${r.author === state.user.id ? `<button class="toggle" data-edit="${r.id}">Modifier</button><button class="toggle danger" data-delete="${r.id}" aria-label="Supprimer cette pierre">Supprimer</button>` : ""}
+        </div>
+      </div>
+    </article>`).join("");
+  state.open.forEach(id => loadComments(id));
+  state.freshId = null;
+}
+async function loadComments(id) {
+  const box = document.querySelector(`[data-comments="${id}"]`); if (!box) return;
+  const data = await pb.collection("comments").getFullList({ filter: `retex = "${q(id)}"`, sort: "created", expand: "author" });
+  box.innerHTML = data.map(c => `<div class="comment"><b>${esc(c.expand?.author?.name ?? "?")}</b> <span class="hint">${timeAgo(c.created)}</span><br>${esc(c.body)}</div>`).join("")
+    + `<form data-comment-form="${id}"><input placeholder="Ajouter un commentaire, une nuance, un contre-exemple…" aria-label="Votre commentaire" required maxlength="4000"><button class="btn" type="submit">Envoyer</button></form>`;
+}
+function renderLeaderboard(rows) {
+  $("#leaderboard").innerHTML = rows.filter(r => r.points > 0).map((r, i) => `
+    <li class="${r.id === state.user.id ? "me" : ""}">
+      <span class="rank">${i + 1}</span>
+      <span>${esc(r.name)}<br><span class="lvl">${levelFor(r.points)}</span></span>
+      <span class="pts">${r.points}</span>
+    </li>`).join("") || `<li class="hint">Personne n'a encore de points.</li>`;
+  const me = rows.find(r => r.id === state.user.id) || { points: 0, retex_count: 0, votes_received: 0, votes_given: 0, comments_count: 0 };
+  const next = LEVELS.find(([min]) => min > me.points);
+  const prev = [...LEVELS].reverse().find(([min]) => min <= me.points) || LEVELS[0];
+  const pct = next ? Math.round(100 * (me.points - prev[0]) / (next[0] - prev[0])) : 100;
+  $("#meCard").innerHTML = `
+    <h2>Vous</h2>
+    <div class="me-name">${esc(state.user.name)}</div>
+    <div class="alt">${levelFor(me.points)}, ${(me.points * 10).toLocaleString("fr-FR")} m · ${me.points} pts</div>
+    <div class="bar" role="progressbar" aria-label="Progression vers le niveau suivant" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct}%"></i></div>
+    <div class="hint">${next ? `Encore ${next[0] - me.points} pts avant ${next[1]}.` : "Sommet atteint."}</div>
+    <div class="hint" style="margin-top:6px">${me.retex_count} pierre${me.retex_count > 1 ? "s" : ""} posée${me.retex_count > 1 ? "s" : ""} · ${me.votes_received} calage${me.votes_received > 1 ? "s" : ""} reçu${me.votes_received > 1 ? "s" : ""} · ${me.comments_count} commentaire${me.comments_count > 1 ? "s" : ""}</div>
+    <div class="badges" style="margin-top:6px">${badgesFor(me).map(b => `<span>${b}</span>`).join("") || `<span class="hint">Aucun badge pour l'instant</span>`}</div>
+`;
+}
+
+/* ---------- Le cairn de l'organisation : une pierre par retex ---------- */
+async function loadCairn() {
+  const page = await pb.collection("retex").getList(1, 1, { sort: "-created", expand: "author" });
+  const total = page.totalItems, last = page.items[0];
+  const mineLast = !!last && last.author === state.user.id;
+  const isNew = state.stones >= 0 && total > state.stones && state.justPosed;
+  state.stones = total; state.justPosed = false;
+  const shown = Math.min(total, 12);
+  // Pierres de bas en haut : largeur décroissante, léger décalage pseudo-aléatoire
+  const stones = [];
+  let y = 150;
+  for (let i = 0; i < shown; i++) {
+    const w = 170 - i * 11, h = 26 - i * 1.2, dx = ((i * 37) % 11) - 5, x = 110 + dx;
+    y -= h * 0.58;
+    const top = i === shown - 1;
+    stones.push(`<g class="stone-row ${top && mineLast ? "mine" : ""} ${top && isNew ? "new" : ""}" style="animation-delay:${i * 45}ms">
+      <ellipse class="stone" cx="${x}" cy="${y}" rx="${w/2}" ry="${h/2}" transform="rotate(${dx * 0.6} ${x} ${y})" fill="${i % 2 ? "var(--stone)" : "var(--stone-2)"}"/>
+      <ellipse cx="${x - w*0.12}" cy="${y - h*0.18}" rx="${w*0.28}" ry="${h*0.16}" fill="var(--card)" opacity=".3"/></g>`);
+  }
+  const top = Math.max(0, Math.round(y - 22)), vh = 170 - top;
+  $("#cairnCard").innerHTML = `
+    <h2>Le cairn de ${esc(state.org?.name || "l'équipe")}</h2>
+    <svg viewBox="0 ${top} 220 ${vh}" style="max-height:${Math.round(vh * 1.05)}px" aria-hidden="true"><ellipse cx="110" cy="158" rx="95" ry="10" fill="var(--line)"/>${stones.join("")}</svg>
+    <div class="n">${total} pierre${total > 1 ? "s" : ""}</div>
+    <p class="hint">${total === 0 ? "Le chemin attend sa première pierre." : mineLast ? "La dernière a été posée par vous." : `La dernière a été posée par ${esc(last.expand?.author?.name || "un membre")}${total > 12 ? ", les 12 dernières sont visibles" : ""}.`}</p>
+    ${objectivesOf().length
+      ? `<p class="hint" style="margin-top:12px;text-align:left"><b>Ce cairn balise :</b></p><ul class="objectives">${objectivesOf().map(o => `<li>${esc(o)}</li>`).join("")}</ul>`
+      : `<p class="hint" style="margin-top:10px">Aucun objectif défini. <button type="button" class="toggle" data-menu="org" style="margin:0">Définir les objectifs du cairn</button></p>`}`;
+}
+const objectivesOf = () => String(state.org?.objectives || "").split("\n").map(l => l.trim()).filter(Boolean).slice(0, 5);
+
+/* ---------- Le chemin vers l'horizon (accueil, données agrégées et anonymes) ----------
+   Le paysage est un shader WebGL plein écran, sans dépendance : ciel au lavis, cinq plans de
+   montagnes dans la brume, un sol en perspective avec ses brins d'herbe, et un sentier sinueux.
+   Les cairns sont des SVG posés par-dessus, projetés avec la même caméra (hauteur 1, focale 1)
+   pour suivre le sentier ; ils restent survolables, focusables et lisibles par un lecteur d'écran.
+   Sans WebGL, un dégradé CSS tient lieu de paysage. Tout mouvement est coupé avec prefers-reduced-motion. */
+const horizonScene = (() => {
+  const VERT = "attribute vec2 p; void main(){ gl_Position = vec4(p, 0., 1.); }";
+  const FRAG = `
+precision highp float;
+uniform vec2 uRes; uniform float uAspect, uHY, uTime, uMouse, uMotion, uSunA, uGrain;
+uniform vec3 cSkyTop, cSkyLow, cMist, cRidge, cGround, cGrass, cPath, cPath2, cSun, cInk;
+float hash(vec2 p) { p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
+float noise(vec2 p) { vec2 i = floor(p), f = fract(p); f = f * f * (3. - 2. * f);
+  return mix(mix(hash(i), hash(i + vec2(1, 0)), f.x), mix(hash(i + vec2(0, 1)), hash(i + 1.), f.x), f.y); }
+float fbm(vec2 p) { float v = 0., a = .5; for (int i = 0; i < 5; i++) { v += a * noise(p); p = p * 2.03 + 11.7; a *= .5; } return v; }
+/* Profil de crête, pointu comme sur une estampe */
+float ridge(float x, float s) {
+  float r = 1. - abs(2. * noise(vec2(x * 1.6 + s, s)) - 1.);
+  float r2 = 1. - abs(2. * noise(vec2(x * 3.7 + s * 2., s + 3.)) - 1.);
+  return .5 * r + .28 * r2 + .3 * fbm(vec2(x * 2.2 + s * 5., s));
+}
+/* Centre du sentier en x écran, en fonction de la distance écran sous l'horizon (partagé avec le JS) */
+float pathX(float t) { return uAspect * (.30 * sin(4.0 * t + 1.4) + .11 * sin(9.3 * t + 2.8)); }
+void main() {
+  vec2 uv = gl_FragCoord.xy / uRes * 2. - 1.; uv.x *= uAspect;
+  float px = 2. / uRes.y;
+  /* Ciel */
+  float sk = clamp((uv.y - uHY) / max(.001, 1. - uHY), 0., 1.);
+  vec3 col = mix(cSkyLow, cSkyTop, pow(sk, .6));
+  col += (fbm(uv * 1.3 + vec2(uTime * .01 * uMotion, 0.)) - .5) * .035;
+  /* Soleil ou lune */
+  vec2 sp = vec2(-uAspect * .84 + uMouse * .03, uHY + .62);
+  float sd = length(uv - sp);
+  col = mix(col, cSun, uSunA * (smoothstep(.115, .105, sd) + .35 * exp(-sd * 4.)));
+  /* Montagnes, cinq plans du lointain au proche, chacune fondue dans la brume à son pied */
+  for (int i = 0; i < 5; i++) {
+    float fi = float(i), d = 1. - fi / 4.;
+    float par = uMouse * (.02 + .06 * d);
+    float base = uHY - .015 + .12 * d;
+    float amp = .10 + .30 * d;
+    float y = base + amp * ridge((uv.x + par) * (.7 + .3 * d) + fi * 3.1, fi * 7.3);
+    float m = smoothstep(y + px, y - px, uv.y);
+    vec3 c = mix(cRidge, cMist, .12 + .72 * d);
+    c += (fbm(vec2(uv.x * 5., uv.y * 12.) + fi) - .5) * .05;
+    float fog = smoothstep(base + .05 + .08 * d, base - .01, uv.y);
+    fog = max(fog, .45 * smoothstep(.45, .7, fbm(vec2(uv.x * 1.2 + uTime * .015 * uMotion, uv.y * 6. + fi))));
+    c = mix(c, cMist, fog * .85);
+    c = mix(c, cInk, .12 * smoothstep(.012, 0., y - uv.y) * (1. - d));
+    col = mix(col, c, m);
+  }
+  /* Sol : intersection du rayon avec le plan y = 0, caméra à hauteur 1 */
+  float t = uHY - uv.y;
+  if (t > 0.) {
+    float z = 1. / t; float x = uv.x * z;
+    float fogG = 1. - exp(-z * .10);
+    float n = fbm(vec2(x * 1.6, z * 1.6));
+    vec3 g = mix(cGround, cGrass, smoothstep(.3, .75, n));
+    g += (noise(vec2(x * 60., z * 4.)) - .5) * .06;
+    /* Le sentier sinueux, un peu usé sur les bords */
+    float pc = pathX(t) * z;
+    float w = .20 + .04 * sin(z * 2.7 + 1.);
+    float dist = abs(x - pc) + (noise(vec2(x * 7., z * 7.)) - .5) * .08;
+    float onPath = smoothstep(w + .05, w - .03, dist);
+    float rim = smoothstep(w + .18, w + .02, dist) - onPath;
+    vec3 pcol = mix(cPath, cPath2, noise(vec2(x * 28., z * 28.)) * .7 + fbm(vec2(x * 3., z * 3.)) * .3);
+    g = mix(g, g * .82, rim * .6);
+    g = mix(g, pcol, onPath);
+    g = mix(g, cMist, fogG);
+    col = mix(col, g, smoothstep(0., .03, t));
+    /* Brins d'herbe dressés au premier plan : pour chaque pixel, les brins qui pourraient le couvrir */
+    if (t > .12) {
+      float hb = .045;
+      float zt = (1. - hb) * z;
+      for (int k = 0; k < 4; k++) {
+        float zb = mix(zt, z, (float(k) + .5) / 4.);
+        float cs = .055;
+        vec2 cell = floor(vec2(uv.x * zb, zb) / cs);
+        float h1 = hash(cell), h2 = hash(cell + 7.3);
+        vec2 bp = (cell + vec2(h1, h2)) * cs;
+        float bh = hb * (.45 + h2 * .8);
+        float ybase = uHY - 1. / bp.y, ytop = uHY - (1. - bh) / bp.y;
+        float tp = clamp((uv.y - ybase) / max(1e-4, ytop - ybase), 0., 1.);
+        float sxb = bp.x / bp.y + uMotion * .012 * sin(uTime * 1.3 + h1 * 6.28 + bp.y * 2.) * tp / bp.y;
+        float thick = (.006 / bp.y) * (1. - tp * .85) + px * .5;
+        float inY = step(ybase, uv.y) * step(uv.y, ytop);
+        float m = inY * smoothstep(thick, thick * .4, abs(uv.x - sxb));
+        float bpc = pathX(1. / bp.y) * bp.y;
+        m *= smoothstep(w + .02, w + .14, abs(bp.x - bpc));
+        vec3 bc = mix(cGrass, cGround, h1 * .6) * (.85 + .3 * tp);
+        col = mix(col, mix(bc, cMist, 1. - exp(-bp.y * .10)), m);
+      }
+    }
+  }
+  /* Grain de papier et vignette */
+  col += (hash(gl_FragCoord.xy * .7) - .5) * uGrain;
+  col *= 1. - .16 * smoothstep(.55, 1.45, length(uv / vec2(uAspect, 1.)));
+  gl_FragColor = vec4(col, 1.);
+}`;
+  const COLORS = { cSkyTop: "--scene-sky-top", cSkyLow: "--scene-sky-low", cMist: "--scene-mist", cRidge: "--scene-ridge", cGround: "--scene-ground", cGrass: "--scene-grass", cPath: "--scene-path", cPath2: "--scene-path-2", cSun: "--scene-sun", cInk: "--ink" };
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)");
+  let section, canvas, gl, U = {}, ok = false, raf = 0, motion = true, mouse = 0, mouseTarget = 0;
+  let geo = null, days = [], fmt = (d) => d;
+
+  const hex = (v) => { v = v.trim(); if (v[0] !== "#") return [.5, .5, .5]; if (v.length === 4) v = "#" + [...v.slice(1)].map(c => c + c).join(""); const n = parseInt(v.slice(1), 16); return [(n >> 16 & 255) / 255, (n >> 8 & 255) / 255, (n & 255) / 255]; };
+  const pathX = (t, aspect) => aspect * (.30 * Math.sin(4.0 * t + 1.4) + .11 * Math.sin(9.3 * t + 2.8));
+  const hash01 = (i) => { const x = Math.sin(i * 12.9898 + 78.233) * 43758.5453; return x - Math.floor(x); };
+
+  function init() {
+    gl = canvas.getContext("webgl", { antialias: false, alpha: false, depth: false, powerPreference: "low-power" });
+    if (!gl) return false;
+    const sh = (type, src) => { const o = gl.createShader(type); gl.shaderSource(o, src); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) { console.warn("WeCairn scène :", gl.getShaderInfoLog(o)); return null; } return o; };
+    const vs = sh(gl.VERTEX_SHADER, VERT), fs = sh(gl.FRAGMENT_SHADER, FRAG); if (!vs || !fs) return false;
+    const prog = gl.createProgram(); gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return false;
+    gl.useProgram(prog);
+    gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer()); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(prog, "p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    for (const n of ["uRes", "uAspect", "uHY", "uTime", "uMouse", "uMotion", "uSunA", "uGrain", ...Object.keys(COLORS)]) U[n] = gl.getUniformLocation(prog, n);
+    return true;
+  }
+  function retheme() {
+    if (!ok) return;
+    const cs = getComputedStyle(document.documentElement);
+    for (const [n, token] of Object.entries(COLORS)) gl.uniform3fv(U[n], hex(cs.getPropertyValue(token)));
+    gl.uniform1f(U.uSunA, parseFloat(cs.getPropertyValue("--scene-sun-a")) || .3);
+    gl.uniform1f(U.uGrain, parseFloat(cs.getPropertyValue("--scene-grain")) || .05);
+    frame();
+  }
+  function draw(now) {
+    mouse += (mouseTarget - mouse) * .06;
+    gl.uniform1f(U.uTime, now / 1000); gl.uniform1f(U.uMouse, motion ? mouse : 0); gl.uniform1f(U.uMotion, motion ? 1 : 0);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  const visible = () => section && !section.hidden && !document.hidden && geo;
+  function loop(now) { raf = 0; if (!visible() || !motion) return; draw(now); raf = requestAnimationFrame(loop); }
+  /* Une image est toujours dessinée ; la boucle ne tourne qu'avec le mouvement autorisé et la page visible */
+  function frame() { if (!ok || !geo || section.hidden) return; draw(motion ? performance.now() : 0); if (motion && visible() && !raf) raf = requestAnimationFrame(loop); }
+
+  /* Géométrie : l'horizon est calé un peu sous le haut de la zone « route », les cairns vivent dedans */
+  function layout() {
+    if (!section || section.hidden) return;
+    const W = section.clientWidth, H = section.clientHeight;
+    const wrap = $("#horizonWrap"), s = section.getBoundingClientRect(), r = wrap.getBoundingClientRect();
+    if (!W || !H || !r.height) return;
+    const roadTop = r.top - s.top, roadBottom = r.bottom - s.top;
+    const hPx = roadTop + (roadBottom - roadTop) * .10;
+    geo = { W, H, aspect: W / H, hY: 1 - 2 * hPx / H, roadBottom };
+    if (ok) {
+      const dpr = Math.min(devicePixelRatio || 1, 1.5);
+      canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.uniform2f(U.uRes, canvas.width, canvas.height); gl.uniform1f(U.uAspect, geo.aspect); gl.uniform1f(U.uHY, geo.hY);
+    }
+    placeCairns();
+    frame();
+  }
+
+  /* Les cairns le long du sentier : le jour le plus récent au premier plan, les anciens vers l'horizon */
+  function placeCairns() {
+    const box = $("#horizon"); if (!box || !geo) return;
+    const { W, H, aspect, hY, roadBottom } = geo;
+    const n = days.length, half = H / 2;
+    const tFar = .12, tNear = hY - (1 - 2 * (roadBottom - 26) / H);
+    if (!(tNear > tFar)) { box.innerHTML = ""; return; }
+    const items = days.map((d, i) => {
+      const u = n > 1 ? i / (n - 1) : 1;
+      const t = tFar + (tNear - tFar) * Math.pow(u, 1.3);
+      const side = i % 2 ? 1 : -1;
+      const off = (.33 + (hash01(i) - .5) * .1) * side;
+      return { d, i, t, x: (pathX(t, aspect) / aspect * .5 + .5) * W + off * t * half, y: (1 - (hY - t)) * half, s: Math.pow(t / tNear, .7) };
+    }).sort((a, b) => a.t - b.t);
+    const parts = [`<defs>
+      <radialGradient id="gStone" cx=".38" cy=".28" r=".8"><stop offset="0" style="stop-color:color-mix(in srgb, var(--stone) 60%, white)"/><stop offset=".55" style="stop-color:var(--stone)"/><stop offset="1" style="stop-color:var(--stone-edge)"/></radialGradient>
+      <radialGradient id="gStone2" cx=".38" cy=".28" r=".8"><stop offset="0" style="stop-color:color-mix(in srgb, var(--stone-2) 70%, white)"/><stop offset=".55" style="stop-color:var(--stone-2)"/><stop offset="1" style="stop-color:color-mix(in srgb, var(--stone-2) 70%, var(--ink))"/></radialGradient>
+      <radialGradient id="gLichen" cx=".38" cy=".28" r=".8"><stop offset="0" style="stop-color:#f0a273"/><stop offset=".55" style="stop-color:var(--accent)"/><stop offset="1" style="stop-color:#a8552a"/></radialGradient>
+      <radialGradient id="gShadow"><stop offset="0" style="stop-color:var(--ink);stop-opacity:.32"/><stop offset="1" style="stop-color:var(--ink);stop-opacity:0"/></radialGradient>
+    </defs>`];
+    for (const { d, i, t, x, y, s } of items) {
+      const stones = Math.min(9, d.count);
+      const label = `${fmt(d.date)} : ${d.count} pierre${d.count > 1 ? "s" : ""}${d.tags.length ? ", thèmes " + d.tags.map(t => t.tag).join(", ") : ""}`;
+      let g = `<g class="day ${i === n - 1 ? "today" : ""}" tabindex="0" role="listitem" data-i="${i}" style="animation-delay:${(n - 1 - i) * 25}ms"><title>${esc(label)}</title>`;
+      if (stones === 0) {
+        const v = .8 + hash01(i + 40) * .5, rx = (7 * s + 1.5) * v, ry = (2.6 * s + .6) * v;
+        g += `<ellipse cx="${x + rx * .3}" cy="${y + ry * .4}" rx="${rx * 1.5}" ry="${ry * 1.4}" fill="url(#gShadow)"/>`;
+        g += `<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="url(#gStone2)" opacity=".75"/>`;
+        g += `<rect class="halo" x="${x - rx - 6}" y="${y - ry - 6}" width="${rx * 2 + 12}" height="${ry * 2 + 12}" rx="6"/>`;
+      } else {
+        const bw = 60 * s + 6;
+        g += `<ellipse cx="${x + bw * .16}" cy="${y + bw * .04}" rx="${bw * .72}" ry="${bw * .17}" fill="url(#gShadow)"/>`;
+        let yy = y;
+        for (let k = 0; k < stones; k++) {
+          const w = bw * (1 - k * .075), h = w * .32;
+          yy -= h * .62;
+          g += `<ellipse class="stone" cx="${x + (((k * 7) % 5) - 2) * s * 1.3}" cy="${yy}" rx="${w / 2}" ry="${h / 2}" fill="${k % 2 ? "url(#gStone)" : "url(#gStone2)"}"/>`;
+        }
+        g += `<rect class="halo" x="${x - bw / 2 - 6}" y="${yy - 10}" width="${bw + 12}" height="${y - yy + 20}" rx="6"/>`;
+      }
+      parts.push(g + "</g>");
+    }
+    box.innerHTML = `<svg class="horizon-stage" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" role="list" aria-label="Pierres posées par jour, les trente derniers jours">${parts.join("")}</svg>`;
+  }
+
+  function start(sec) {
+    if (!section) {
+      section = sec; canvas = sec.querySelector("canvas");
+      motion = !reduce.matches;
+      try { ok = init(); } catch (_) { ok = false; }
+      if (!ok) canvas.hidden = true;
+      reduce.addEventListener("change", () => { motion = !reduce.matches; frame(); });
+      new ResizeObserver(() => layout()).observe(sec);
+      new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+      matchMedia("(prefers-color-scheme: dark)").addEventListener("change", retheme);
+      document.addEventListener("visibilitychange", frame);
+      sec.addEventListener("pointermove", (e) => { mouseTarget = (e.clientX / innerWidth) * 2 - 1; });
+    }
+    layout(); retheme();
+  }
+  function setDays(d, f) { days = d; fmt = f; placeCairns(); }
+  return { start, setDays };
+})();
+
+async function loadHorizon() {
+  const box = $("#horizon"); if (!box) return;
+  horizonScene.start($("#viewLogin"));
+  if (box.dataset.loaded) return;
+  let data;
+  try { data = await (await fetch(`${WECAIRN_URL}/api/wecairn/horizon?days=30`)).json(); } catch (_) { data = { days: [], total: 0, organisations: 0 }; }
+  box.dataset.loaded = "1";
+  const days = data.days || [];
+  const fmt = (date) => new Date(date + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+  horizonScene.setDays(days, fmt);
+  const orgs = data.organisations || 0, total = data.total || 0;
+  $("#horizonLegend").innerHTML = `<span><b>${total}</b> pierre${total > 1 ? "s" : ""} posée${total > 1 ? "s" : ""} ces trente jours</span><span><b>${orgs}</b> organisation${orgs > 1 ? "s" : ""} sur le chemin</span><span>Aujourd'hui en lichen, au premier plan. Survolez un cairn pour voir ses thèmes.</span>`;
+  const tip = $("#horizonTip"), section = $("#viewLogin");
+  const show = (g) => {
+    const d = days[+g.dataset.i]; if (!d) return;
+    const r = g.getBoundingClientRect(), w = section.getBoundingClientRect();
+    tip.innerHTML = `<b>${esc(fmt(d.date))}</b>${d.count} pierre${d.count > 1 ? "s" : ""} posée${d.count > 1 ? "s" : ""}${d.tags.length ? `<div class="tags">${d.tags.map(t => `<span>${esc(t.tag)} ${t.n}</span>`).join("")}</div>` : d.count === 1 ? `<div style="opacity:.8">Thèmes masqués : une seule pierre ce jour-là.</div>` : ""}`;
+    tip.hidden = false;
+    const left = Math.min(w.width - tip.offsetWidth - 4, Math.max(4, r.left - w.left + r.width / 2 - tip.offsetWidth / 2));
+    tip.style.left = left + "px"; tip.style.top = Math.max(0, r.top - w.top - tip.offsetHeight - 8) + "px";
+  };
+  // Délégation : les cairns sont redessinés à chaque redimensionnement
+  const dayOf = (e) => e.target.closest && e.target.closest(".day");
+  box.addEventListener("mouseover", (e) => { const g = dayOf(e); if (g) show(g); });
+  box.addEventListener("mouseout", (e) => { if (dayOf(e) && !box.contains(e.relatedTarget?.closest?.(".day"))) tip.hidden = true; });
+  box.addEventListener("focusin", (e) => { const g = dayOf(e); if (g) show(g); });
+  box.addEventListener("focusout", () => tip.hidden = true);
+}
+function renderTagCloud(rows) {
+  const count = {};
+  rows.forEach(r => tagsOf(r).forEach(t => count[t] = (count[t] || 0) + 1));
+  const tags = Object.entries(count).sort((a, b) => b[1] - a[1]).slice(0, 25);
+  $("#tagCloud").innerHTML = tags.map(([t, n]) => `<button type="button" class="tag" data-tag="${esc(t)}" style="margin:2px" aria-label="Filtrer par le tag ${esc(t)}, ${n} retex">${esc(t)} ${n}</button>`).join("") || `<span class="hint">Aucun tag</span>`;
+}
+
+/* ---------- Interactions ---------- */
+document.addEventListener("click", async (e) => {
+  const vote = e.target.closest("[data-vote]");
+  if (vote) {
+    const id = vote.dataset.vote;
+    vote.classList.remove("settle"); void vote.offsetWidth; vote.classList.add("settle");
+    vote.setAttribute("aria-pressed", String(!state.votes.has(id)));
+    try {
+      if (state.votes.has(id)) await pb.collection("votes").delete(state.votes.get(id));
+      else { await pb.collection("votes").create({ retex: id, user: state.user.id }); toast("Pierre calée, +1 point"); }
+    } catch (err) { toast(errMsg(err)); }
+    refresh(); return;
+  }
+  const edit = e.target.closest("[data-edit]");
+  if (edit) { openEdit(edit.dataset.edit); return; }
+  const del = e.target.closest("[data-delete]");
+  if (del) {
+    if (!del.classList.contains("armed")) {
+      del.classList.add("armed"); del.textContent = "Confirmer la suppression"; del.setAttribute("aria-label", "Confirmer la suppression définitive de cette pierre");
+      setTimeout(() => { if (del.isConnected) { del.classList.remove("armed"); del.textContent = "Supprimer"; del.setAttribute("aria-label", "Supprimer cette pierre"); } }, 5000);
+      return;
+    }
+    try { await pb.collection("retex").delete(del.dataset.delete); state.open.delete(del.dataset.delete); toast("Pierre retirée du cairn."); }
+    catch (err) { toast(errMsg(err)); }
+    refresh(); return;
+  }
+  const open = e.target.closest("[data-open]");
+  if (open) {
+    const id = open.dataset.open;
+    state.open.has(id) ? state.open.delete(id) : state.open.add(id);
+    const art = open.closest(".retex"); art.classList.toggle("open");
+    open.textContent = state.open.has(id) ? "Réduire" : "Lire le retex"; open.setAttribute("aria-expanded", String(state.open.has(id)));
+    if (state.open.has(id)) loadComments(id);
+    return;
+  }
+  const tag = e.target.closest("[data-tag]");
+  if (tag) { state.tag = tag.dataset.tag; state.q = ""; $("#q").value = ""; $("#tagFilter").hidden = false; $("#tagFilterLabel").textContent = state.tag; loadFeed(); return; }
+  if (e.target.closest("#tagClear")) { state.tag = null; $("#tagFilter").hidden = true; loadFeed(); return; }
+  const sortBtn = e.target.closest("#sort button");
+  if (sortBtn) { state.sort = sortBtn.dataset.sort; document.querySelectorAll("#sort button").forEach(b => { b.classList.toggle("on", b === sortBtn); b.setAttribute("aria-pressed", String(b === sortBtn)); }); loadFeed(); }
+});
+document.addEventListener("submit", async (e) => {
+  const f = e.target.closest("[data-comment-form]"); if (!f) return;
+  e.preventDefault();
+  const body = f.querySelector("input").value.trim(); if (!body) return;
+  try { await pb.collection("comments").create({ retex: f.dataset.commentForm, author: state.user.id, body }); }
+  catch (err) { return toast(errMsg(err)); }
+  refresh();
+});
+let qTimer; $("#q").addEventListener("input", (e) => { clearTimeout(qTimer); qTimer = setTimeout(() => { state.q = e.target.value; loadFeed(); }, 250); });
+
+/* ---------- Thème clair / sombre : automatique, clair, sombre ---------- */
+const THEMES = [["auto", "automatique"], ["light", "clair"], ["dark", "sombre"]];
+function applyTheme(t) {
+  if (t === "auto") delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = t;
+  try { t === "auto" ? localStorage.removeItem("wecairn-theme") : localStorage.setItem("wecairn-theme", t); } catch (_) {}
+  const label = "Thème : " + THEMES.find(([k]) => k === t)[1];
+  $("#btnTheme").setAttribute("aria-label", label); $("#btnTheme").title = label + " (cliquer pour changer)";
+}
+$("#btnTheme").addEventListener("click", () => {
+  const cur = document.documentElement.dataset.theme || "auto";
+  const next = THEMES[(THEMES.findIndex(([k]) => k === cur) + 1) % THEMES.length][0];
+  applyTheme(next); toast("Thème " + THEMES.find(([k]) => k === next)[1]);
+});
+applyTheme(document.documentElement.dataset.theme || "auto");
+
+/* ---------- Menu utilisateur ---------- */
+const initials = (n) => String(n || "?").split(/\s+/).map(w => w[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
+async function renderMenu() {
+  $("#menuName").textContent = state.user.name; $("#avatar").textContent = initials(state.user.name);
+  $("#ddName").textContent = state.user.name; $("#ddEmail").textContent = state.user.email;
+  try {
+    const r = await fetch(`${WECAIRN_URL}/api/wecairn/me`, { headers: { Authorization: pb.authStore.token } });
+    const me = r.ok ? await r.json() : {};
+    $("#adminLink").hidden = !me.superadmin;
+    $("#adminLink").href = `${WECAIRN_URL}/_/`;
+    $("#accountPwdHint").textContent = me.superadmin ? "(il sert aussi pour la console d'administration)" : "";
+  } catch (_) { $("#adminLink").hidden = true; }
+}
+function toggleMenu(open) {
+  const dd = $("#dropdown"); dd.hidden = open === undefined ? !dd.hidden : !open;
+  $("#btnMenu").setAttribute("aria-expanded", String(!dd.hidden));
+}
+$("#btnMenu").addEventListener("click", (e) => { e.stopPropagation(); toggleMenu(); if (!$("#dropdown").hidden) $("#dropdown").querySelector("button").focus(); });
+document.addEventListener("click", (e) => { if (!e.target.closest("#userMenu")) toggleMenu(false); });
+document.addEventListener("keydown", (e) => {
+  const dd = $("#dropdown"); if (dd.hidden) return;
+  if (e.key === "Escape") { toggleMenu(false); $("#btnMenu").focus(); return; }
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    const items = [...dd.querySelectorAll("button, a")].filter(i => !i.hidden);
+    const i = items.indexOf(document.activeElement);
+    e.preventDefault(); items[(i + (e.key === "ArrowDown" ? 1 : items.length - 1)) % items.length].focus();
+  }
+});
+document.addEventListener("click", (e) => {
+  const item = e.target.closest("[data-menu]"); if (!item) return;
+  toggleMenu(false);
+  if (item.dataset.menu === "account") {
+    const f = $("#formAccount"); f.name.value = state.user.name; f.email.value = state.user.email; f.old.value = ""; f.new.value = "";
+    $("#dlgAccount").showModal();
+  }
+  if (item.dataset.menu === "org") {
+    const f = $("#formOrg"); f.name.value = state.org?.name || ""; f.objectives.value = state.org?.objectives || "";
+    $("#dlgOrg").showModal();
+  }
+  if (item.dataset.menu === "mcp") {
+    $("#mcpSnippet").textContent = JSON.stringify({ mcpServers: { wecairn: { command: "node", args: ["/chemin/vers/WeCairn/mcp/server.js"],
+      env: { WECAIRN_URL, WECAIRN_EMAIL: state.user.email, WECAIRN_PASSWORD: "votre mot de passe WeCairn" } } } }, null, 2);
+    $("#dlgMcp").showModal();
+  }
+});
+document.addEventListener("click", (e) => { const c = e.target.closest("[data-close]"); if (c) $("#" + c.dataset.close).close(); });
+$("#btnCopyMcp").addEventListener("click", async () => { try { await navigator.clipboard.writeText($("#mcpSnippet").textContent); toast("Configuration copiée."); } catch (_) { toast("Copie impossible, sélectionnez le texte."); } });
+$("#formOrg").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const objectives = String(fd.get("objectives") || "").split("\n").map(l => l.trim()).filter(Boolean).slice(0, 5).join("\n");
+  try {
+    state.org = await pb.collection("organisations").update(state.user.organisation, { name: String(fd.get("name")).trim(), objectives });
+    $("#orgName").textContent = state.org.name; $("#dlgOrg").close(); toast("Cairn mis à jour."); refresh();
+  } catch (err) { toast(errMsg(err)); }
+});
+$("#formAccount").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target), data = { name: String(fd.get("name")).trim() };
+  const oldPwd = fd.get("old"), newPwd = fd.get("new");
+  if (newPwd || oldPwd) {
+    if (!oldPwd || !newPwd) return toast("Indiquez le mot de passe actuel et le nouveau.");
+    Object.assign(data, { oldPassword: oldPwd, password: newPwd, passwordConfirm: newPwd });
+  }
+  try {
+    await pb.collection("users").update(state.user.id, data);
+    if (newPwd) await pb.collection("users").authWithPassword(state.user.email, newPwd);
+    else await pb.collection("users").authRefresh();
+    state.user = pb.authStore.record; renderMenu(); refresh();
+    $("#dlgAccount").close(); toast(newPwd ? "Compte mis à jour, mot de passe modifié." : "Compte mis à jour.");
+  } catch (err) { toast(errMsg(err)); }
+});
+
+/* ---------- Dictée vocale (relais IA côté serveur : OpenAI ou Mistral) ---------- */
+const dict = { enabled: false, recorder: null, chunks: [], transcript: "", busy: false };
+async function loadAiConfig() {
+  try {
+    const r = await fetch(`${WECAIRN_URL}/api/wecairn/ai/config`, { headers: { Authorization: pb.authStore.token } });
+    const cfg = r.ok ? await r.json() : { enabled: false };
+    const mic = !!navigator.mediaDevices?.getUserMedia;
+    dict.enabled = !!cfg.enabled && mic && typeof MediaRecorder !== "undefined";
+    live.enabled = !!cfg.enabled && cfg.mode === "realtime" && mic && typeof RTCPeerConnection !== "undefined";
+  } catch (_) { dict.enabled = false; live.enabled = false; }
+  // Clé OpenAI : entretien temps réel (la dictée reste en repli) ; clé Mistral : dictée seule
+  $("#realtime").hidden = !live.enabled;
+  $("#dictate").hidden = !dict.enabled;
+}
+
+/* ---------- Entretien vocal temps réel (OpenAI Realtime via WebRTC, jeton éphémère côté serveur) ---------- */
+const live = { enabled: false, pc: null, dc: null, stream: null, lines: [], finalized: false, active: false };
+function liveLog(who, text) {
+  if (!text) return;
+  live.lines.push(`${who === "ai" ? "IA" : "Vous"} : ${text}`);
+  const box = $("#liveLog"); box.hidden = false;
+  box.insertAdjacentHTML("beforeend", `<p class="${who}"><b>${who === "ai" ? "IA" : "Vous"}</b> ${esc(text)}</p>`);
+  box.scrollTop = box.scrollHeight;
+}
+function fillDraft(d) {
+  const f = $("#formNew");
+  if (d.title) f.title.value = d.title;
+  if (d.situation) f.situation.value = d.situation;
+  if (d.learning) f.learning.value = d.learning;
+  if (d.recommendation) f.recommendation.value = d.recommendation;
+  if (Array.isArray(d.tags) && d.tags.length) f.tags.value = d.tags.map(t => String(t).toLowerCase()).join(", ");
+}
+async function startLive() {
+  live.active = true; live.finalized = false; live.lines = []; $("#liveLog").innerHTML = ""; $("#liveLog").hidden = true;
+  $("#btnLive").textContent = "⏳ Connexion…"; $("#btnLive").classList.add("busy");
+  const r = await fetch(`${WECAIRN_URL}/api/wecairn/ai/realtime/session`, { method: "POST", headers: { Authorization: pb.authStore.token } });
+  const sess = await r.json();
+  if (!r.ok) throw new Error(sess.message || "Session temps réel refusée.");
+  live.stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const pc = new RTCPeerConnection(); live.pc = pc;
+  pc.ontrack = (ev) => { $("#liveAudio").srcObject = ev.streams[0]; };
+  live.stream.getTracks().forEach(t => pc.addTrack(t, live.stream));
+  const dc = pc.createDataChannel("oai-events"); live.dc = dc;
+  dc.onopen = () => {
+    // Les consignes et l'outil sont déjà dans le jeton ; on les renvoie par sécurité, puis on lance la salutation.
+    dc.send(JSON.stringify({ type: "session.update", session: { type: "realtime", instructions: sess.session.instructions, tools: sess.session.tools, tool_choice: "auto" } }));
+    dc.send(JSON.stringify({ type: "response.create" }));
+    $("#btnLive").textContent = "■ Terminer l'entretien"; $("#btnLive").classList.remove("busy"); $("#btnLive").classList.add("rec");
+    $("#liveStatus").textContent = "En ligne. Parlez naturellement ; l'IA vous relance si besoin et prépare le brouillon.";
+  };
+  dc.onmessage = (ev) => { try { handleLiveEvent(JSON.parse(ev.data)); } catch (_) {} };
+  pc.onconnectionstatechange = () => { if (["failed", "disconnected", "closed"].includes(pc.connectionState) && live.active) stopLive(); };
+  const offer = await pc.createOffer(); await pc.setLocalDescription(offer);
+  const sdp = await fetch(`${sess.calls_url}?model=${encodeURIComponent(sess.model)}`, {
+    method: "POST", body: offer.sdp, headers: { Authorization: `Bearer ${sess.client_secret}`, "Content-Type": "application/sdp" },
+  });
+  if (!sdp.ok) throw new Error(`Connexion audio refusée (${sdp.status}).`);
+  await pc.setRemoteDescription({ type: "answer", sdp: await sdp.text() });
+}
+function handleLiveEvent(ev) {
+  switch (ev.type) {
+    case "conversation.item.input_audio_transcription.completed": liveLog("you", ev.transcript); break;
+    case "response.output_audio_transcript.done": liveLog("ai", ev.transcript); break;
+    case "response.done":
+      for (const item of ev.response?.output || []) {
+        if (item.type !== "function_call" || item.name !== "finalize_retex") continue;
+        let args = {}; try { args = JSON.parse(item.arguments || "{}"); } catch (_) {}
+        fillDraft(args); live.finalized = true;
+        $("#liveStatus").textContent = "Brouillon prêt : relisez, ajustez, puis publiez.";
+        live.dc?.send(JSON.stringify({ type: "conversation.item.create", item: { type: "function_call_output", call_id: item.call_id, output: JSON.stringify({ ok: true }) } }));
+        live.dc?.send(JSON.stringify({ type: "response.create" }));
+        setTimeout(() => { if (live.active) stopLive(); }, 6000);
+      }
+      break;
+    case "error": toast(ev.error?.message || "Erreur de l'entretien vocal."); break;
+  }
+}
+async function stopLive() {
+  live.active = false;
+  try { live.dc?.close(); } catch (_) {}
+  try { live.pc?.close(); } catch (_) {}
+  live.stream?.getTracks().forEach(t => t.stop());
+  live.dc = live.pc = live.stream = null;
+  $("#btnLive").classList.remove("rec", "busy"); $("#btnLive").textContent = "🎙 Reprendre l'entretien";
+  const said = live.lines.filter(l => l.startsWith("Vous")).join("\n");
+  if (!live.finalized && said.length >= 10) {
+    // Entretien interrompu avant la finalisation : on structure ce qui a été dit
+    $("#liveStatus").textContent = "Entretien terminé, structuration de ce que vous avez dit…";
+    try {
+      const r = await fetch(`${WECAIRN_URL}/api/wecairn/ai/extract`, { method: "POST", headers: { Authorization: pb.authStore.token, "Content-Type": "application/json" }, body: JSON.stringify({ transcript: live.lines.join("\n") }) });
+      const data = await r.json(); if (!r.ok) throw new Error(data.message);
+      fillDraft(data.draft);
+      $("#liveStatus").textContent = data.questions?.length ? `Brouillon partiel. Il manque : ${data.questions.join(" ")}` : "Brouillon prêt : relisez, ajustez, puis publiez.";
+    } catch (err) { $("#liveStatus").textContent = "Entretien terminé. " + (err.message || ""); }
+  } else if (!live.finalized) {
+    $("#liveStatus").textContent = "Entretien terminé sans récit exploitable.";
+  }
+  if (live.lines.length) dict.transcript = live.lines.join("\n");
+}
+$("#btnLive").addEventListener("click", async () => {
+  if (live.active) { stopLive(); return; }
+  try { await startLive(); } catch (err) { live.active = false; $("#btnLive").classList.remove("busy", "rec"); $("#btnLive").textContent = "🎙 Réessayer"; $("#liveStatus").textContent = err.message; toast(err.message); }
+});
+function resetDictation() {
+  if (live.active) stopLive();
+  live.lines = []; live.finalized = false; $("#liveLog").innerHTML = ""; $("#liveLog").hidden = true;
+  $("#btnLive").textContent = "🎙 Raconter à l'IA"; $("#btnLive").classList.remove("rec", "busy");
+  $("#liveStatus").textContent = "Un entretien vocal de deux minutes : racontez ce qui s'est passé, l'IA vous relance si besoin puis remplit le formulaire. Vous relisez avant de publier.";
+  dict.transcript = ""; dict.chunks = [];
+  $("#aiQuestions").hidden = true; $("#aiQuestions").innerHTML = "";
+  $("#transcriptBox").hidden = true; $("#transcriptText").textContent = "";
+  $("#recStatus").textContent = live.enabled
+    ? "Ou dictez d'un trait : l'IA structure votre récit et pose ses questions par écrit."
+    : "Décrivez la situation, ce que vous en avez appris, et ce que vous feriez différemment. L'IA remplit le formulaire, vous relisez avant de publier.";
+  $("#btnRec").textContent = live.enabled ? "🎙 Dicter" : "🎙 Raconter à l'oral"; $("#btnRec").classList.remove("rec", "busy");
+}
+async function startRecording() {
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const mime = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4", "audio/ogg"].find(m => MediaRecorder.isTypeSupported?.(m)) || "";
+  dict.chunks = [];
+  dict.recorder = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+  dict.recorder.ondataavailable = (ev) => { if (ev.data?.size) dict.chunks.push(ev.data); };
+  dict.recorder.onstop = async () => {
+    stream.getTracks().forEach(t => t.stop());
+    const type = dict.recorder.mimeType || mime || "audio/webm";
+    const ext = type.includes("mp4") ? "mp4" : type.includes("ogg") ? "ogg" : "webm";
+    await sendDictation(new Blob(dict.chunks, { type }), `audio.${ext}`);
+  };
+  dict.recorder.start();
+  $("#btnRec").textContent = "■ Terminer l'enregistrement"; $("#btnRec").classList.add("rec");
+  $("#recStatus").textContent = "Enregistrement en cours… parlez naturellement, puis cliquez sur Terminer.";
+}
+async function sendDictation(blob, filename) {
+  dict.busy = true; $("#btnRec").classList.remove("rec"); $("#btnRec").classList.add("busy");
+  $("#btnRec").textContent = "⏳ Transcription et analyse…"; $("#recStatus").textContent = "Quelques secondes, le temps de transcrire et de structurer votre récit.";
+  try {
+    const fd = new FormData();
+    fd.append("audio", blob, filename);
+    fd.append("transcript", dict.transcript);
+    const r = await fetch(`${WECAIRN_URL}/api/wecairn/ai/dictate`, { method: "POST", headers: { Authorization: pb.authStore.token }, body: fd });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.message || "Échec de la dictée.");
+    dict.transcript = data.transcript;
+    $("#transcriptText").textContent = data.transcript; $("#transcriptBox").hidden = false;
+    fillDraft(data.draft);
+    if (data.questions?.length) {
+      $("#aiQuestions").innerHTML = `<div class="ai-q"><b>Pour compléter, l'IA vous demande</b>${data.questions.map(q => `<div>• ${esc(q)}</div>`).join("")}<div class="hint" style="margin-top:4px">Répondez à l'oral en réenregistrant, ou complétez directement le formulaire.</div></div>`;
+      $("#aiQuestions").hidden = false;
+      $("#btnRec").textContent = "🎙 Répondre à l'oral"; $("#recStatus").textContent = "Le formulaire est pré-rempli avec ce que vous avez dit.";
+    } else {
+      $("#aiQuestions").hidden = true;
+      $("#btnRec").textContent = "🎙 Compléter à l'oral"; $("#recStatus").textContent = "Formulaire pré-rempli : relisez, ajustez, puis publiez.";
+    }
+  } catch (err) {
+    toast(err.message); $("#btnRec").textContent = "🎙 Réessayer"; $("#recStatus").textContent = err.message;
+  } finally { dict.busy = false; $("#btnRec").classList.remove("busy"); }
+}
+$("#btnRec").addEventListener("click", async () => {
+  if (dict.busy) return;
+  if (dict.recorder && dict.recorder.state === "recording") { dict.recorder.stop(); return; }
+  try { await startRecording(); } catch (err) { toast("Micro indisponible : " + err.message); }
+});
+
+function setNewMode(editing) {
+  state.editing = editing;
+  $("#dlgNewTitle").textContent = editing ? "Modifier la pierre" : "Poser une pierre";
+  $("#btnSubmitNew").textContent = editing ? "Enregistrer" : "Poser la pierre";
+  $("#realtime").hidden = !!editing || !live.enabled; $("#dictate").hidden = !!editing || !dict.enabled;
+  const obj = objectivesOf();
+  $("#objHint").hidden = !obj.length;
+  $("#objHint").innerHTML = obj.length ? `<b>Ce cairn balise :</b> ${obj.map(esc).join(" · ")}` : "";
+}
+$("#btnNew").addEventListener("click", () => { resetDictation(); $("#formNew").reset(); setNewMode(null); $("#dlgNew").showModal(); });
+async function openEdit(id) {
+  let r; try { r = await pb.collection("retex").getOne(id); } catch (err) { return toast(errMsg(err)); }
+  resetDictation(); $("#formNew").reset();
+  fillDraft({ title: r.title, situation: r.situation, learning: r.learning, recommendation: r.recommendation, tags: tagsOf(r) });
+  setNewMode(id); $("#dlgNew").showModal();
+}
+$("#btnCancel").addEventListener("click", () => { if (dict.recorder?.state === "recording") dict.recorder.stop(); if (live.active) { live.lines = []; stopLive(); } $("#dlgNew").close(); });
+$("#formNew").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const tags = String(fd.get("tags") || "").split(",").map(t => t.trim().toLowerCase()).filter(Boolean);
+  let created;
+  if (state.editing) {
+    try {
+      await pb.collection("retex").update(state.editing, { title: fd.get("title"), situation: fd.get("situation"), learning: fd.get("learning"), recommendation: fd.get("recommendation") || "", tags });
+    } catch (err) { return toast(errMsg(err)); }
+    e.target.reset(); $("#dlgNew").close(); toast("Pierre modifiée."); refresh(); return;
+  }
+  try {
+    created = await pb.collection("retex").create({
+      organisation: state.user.organisation, author: state.user.id,
+      title: fd.get("title"), situation: fd.get("situation"), learning: fd.get("learning"),
+      recommendation: fd.get("recommendation") || "", tags, source: "manual", source_ref: live.finalized ? "Entretien vocal avec l'IA" : (dict.transcript ? "Dicté à l'oral" : "")
+    });
+  } catch (err) { return toast(errMsg(err)); }
+  e.target.reset(); $("#dlgNew").close(); state.justPosed = true; state.freshId = created.id; toast("Pierre posée sur le cairn, +10 points"); refresh();
+});
+
+
+boot();
+</script>
+</body>
+</html>
