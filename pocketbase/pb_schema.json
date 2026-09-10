@@ -218,6 +218,25 @@
         "body": "<p>Bonjour,</p><p>Votre code de connexion WeCairn : <strong>{OTP}</strong></p><p>Il est valable 5 minutes.</p>"
       }
     },
+    "verificationTemplate": {
+      "subject": "Vérifiez votre adresse e-mail {APP_NAME}",
+      "body": "<p>Bonjour,</p>\n<p>Bienvenue sur {APP_NAME}. Cliquez sur le bouton ci-dessous pour confirmer votre adresse e-mail.</p>\n<p>\n  <a class=\"btn\" href=\"{APP_URL}/_/#/auth/confirm-verification/{TOKEN}\" target=\"_blank\" rel=\"noopener\">Confirmer mon adresse</a>\n</p>\n<p><i>Si vous ne vous êtes pas inscrit récemment, ignorez simplement cet e-mail.</i></p>\n<p>Bonne route,<br/>L'équipe {APP_NAME}</p>"
+    },
+    "resetPasswordTemplate": {
+      "subject": "Réinitialiser votre mot de passe {APP_NAME}",
+      "body": "<p>Bonjour,</p>\n<p>Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe. Le lien est valable 30 minutes.</p>\n<p>\n  <a class=\"btn\" href=\"{APP_URL}/_/#/auth/confirm-password-reset/{TOKEN}\" target=\"_blank\" rel=\"noopener\">Choisir un nouveau mot de passe</a>\n</p>\n<p><i>Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail : votre mot de passe reste inchangé.</i></p>\n<p>Bonne route,<br/>L'équipe {APP_NAME}</p>"
+    },
+    "confirmEmailChangeTemplate": {
+      "subject": "Confirmez votre nouvelle adresse e-mail {APP_NAME}",
+      "body": "<p>Bonjour,</p>\n<p>Cliquez sur le bouton ci-dessous pour confirmer votre nouvelle adresse e-mail.</p>\n<p>\n  <a class=\"btn\" href=\"{APP_URL}/_/#/auth/confirm-email-change/{TOKEN}\" target=\"_blank\" rel=\"noopener\">Confirmer la nouvelle adresse</a>\n</p>\n<p><i>Si vous n'avez pas demandé ce changement, ignorez cet e-mail.</i></p>\n<p>Bonne route,<br/>L'équipe {APP_NAME}</p>"
+    },
+    "authAlert": {
+      "enabled": true,
+      "emailTemplate": {
+        "subject": "Nouvelle connexion à votre compte {APP_NAME}",
+        "body": "<p>Bonjour,</p>\n<p>Une connexion à votre compte {APP_NAME} vient d'être effectuée depuis un nouvel appareil ou un nouveau lieu.</p>\n<p><i>Si c'est bien vous, tout va bien. Sinon, changez votre mot de passe sans attendre.</i></p>\n<p>Bonne route,<br/>L'équipe {APP_NAME}</p>"
+      }
+    },
     "mfa": {
       "enabled": false,
       "duration": 1800,
