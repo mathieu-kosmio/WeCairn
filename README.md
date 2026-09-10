@@ -69,13 +69,14 @@ les équipes, jamais les textes.
 Il faut le binaire PocketBase (un seul fichier, [pocketbase.io/docs](https://pocketbase.io/docs/)).
 
 ```bash
-git clone https://github.com/Kosmio/wecairn.git && cd wecairn
+git clone https://github.com/mathieu-kosmio/WeCairn.git && cd WeCairn
 ./pocketbase serve --hooksDir pocketbase/pb_hooks --publicDir web
 ```
 
 Puis, dans le navigateur :
 
-1. `http://127.0.0.1:8090/_/` : créer le compte superutilisateur.
+1. Créer le compte superutilisateur : ouvrir le lien `…/_/#/pbinstal/…` que PocketBase affiche dans le terminal
+   au premier démarrage (ou `./pocketbase superuser upsert vous@exemple.fr 'mot-de-passe'`).
 2. **Settings > Import collections** : charger `pocketbase/pb_schema.json` et valider.
 3. `http://127.0.0.1:8090/` : créer un compte avec une adresse e-mail professionnelle, poser la première pierre.
 

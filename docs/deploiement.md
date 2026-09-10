@@ -7,7 +7,12 @@
    `docker-compose.yaml` et construit l'image depuis le `Dockerfile`.
 3. Assigner un domaine au service `wecairn` (par exemple `https://wecairn.exemple.fr`, port 8090). Coolify gère le
    certificat et le reverse proxy : le compose n'expose aucun port et n'embarque pas de Traefik.
-4. Déployer, puis ouvrir `https://wecairn.exemple.fr/_/` pour créer le superutilisateur (première ouverture uniquement).
+4. Déployer, puis créer le superutilisateur. Depuis PocketBase 0.23, `/_/` affiche directement un formulaire de
+   connexion sur une instance vierge (il n'y a pas de formulaire de création) ; deux façons de faire :
+   - **Terminal du conteneur** (Coolify : ressource > *Terminal*) :
+     `/pb/pocketbase superuser upsert vous@exemple.fr 'un-mot-de-passe-solide' --dir /pb/pb_data`
+   - **Lien d'installation** : dans les *Logs* du conteneur, au premier démarrage, PocketBase imprime une URL
+     `…/_/#/pbinstal/<jeton>` ; remplacer `0.0.0.0:8090` par le domaine public et l'ouvrir.
 5. **Settings > Import collections** : charger `pocketbase/pb_schema.json`, valider. Une seule fois ; ensuite les
    collections vivent dans le volume `wecairn_data`.
 6. **Settings > Mail settings** : renseigner un SMTP (Brevo ou autre) pour la réinitialisation de mot de passe.
