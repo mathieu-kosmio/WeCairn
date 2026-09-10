@@ -19,6 +19,10 @@ hook, jamais par le client), `mute_emails` (le membre coupe les notifications de
 
 **comments** : `retex`, `author`, `body`, `notified` (masqué, file d'attente des notifications).
 
+**api_keys** : `user`, `name` (nom de l'agent), `prefix` (début de la clé, pour la reconnaître), `hash` (SHA-256 de la
+clé, masqué), `expires` (30 jours), `last_used`. Créées par la route `/api/wecairn/keys`, listées et révoquées par leur
+propriétaire. La clé complète n'est jamais stockée.
+
 ## Vues SQL
 
 **retex_feed** joint le retex, le nom de l'auteur, le nombre de votes et de commentaires. C'est ce que lit le fil.
@@ -46,6 +50,7 @@ bon public, discutant). Le score « tendance » du fil (votes pondérés par l'a
 | retex | son organisation | au nom de soi-même, dans son organisation | auteur | auteur |
 | votes | son organisation | au nom de soi-même | interdite | auteur du vote |
 | comments | son organisation | au nom de soi-même | auteur | auteur |
+| api_keys | ses propres clés | route dédiée | interdite | propriétaire |
 | retex_feed, leaderboard | son organisation | vues | vues | vues |
 
 Quand une règle refuse une modification, PocketBase répond `404` (l'enregistrement est « introuvable » pour cet

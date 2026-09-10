@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="alternate" type="text/plain" href="/llms.txt" title="llms.txt">
+  <meta name="mcp-server" content="/mcp">
 <title>WeCairn</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -169,6 +171,8 @@
   form.new input, form.new textarea, .login input, .account input, .account textarea { width: 100%; padding: 9px 11px; border: 1px solid var(--line-strong); border-radius: var(--r-sm); font: inherit; background: var(--bg); color: var(--ink); }
   form.new textarea { min-height: 72px; resize: vertical; }
   .hint { font-size: 12px; color: var(--muted); }
+  pre.mono { margin: 0; padding: 8px 10px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-sm); font-size: 13px; white-space: pre-wrap; word-break: break-all; }
+  #keyList li { font-size: 13px; }
   label.check { display: flex; gap: 8px; align-items: baseline; margin-top: 12px; font-size: 14px; cursor: pointer; }
   label.check input { width: auto; margin: 0; }
   .empty { color: var(--muted); text-align: center; padding: 40px 0; }
@@ -270,7 +274,7 @@
       <div class="dd-head"><b id="ddName"></b><br><span class="hint" id="ddEmail"></span></div>
       <button type="button" data-menu="account">Mon compte</button>
       <button type="button" data-menu="org">Notre cairn (organisation)</button>
-      <button type="button" data-menu="mcp">Connecter Claude (MCP)</button>
+      <button type="button" data-menu="mcp">Connecter un agent IA (MCP)</button>
       <a id="adminLink" href="/_/" target="_blank" rel="noopener" hidden>Console d'administration ↗</a>
       <hr>
       <button type="button" id="btnLogout">Déconnexion</button>
@@ -287,6 +291,7 @@
       <div class="intro frost">
         <h2>Chaque retex est une pierre posée pour ceux qui suivent.</h2>
         <p class="lead">Les équipes qui utilisent WeCairn partagent leurs retours d'expérience et érigent, jour après jour, des cairns au bord du chemin. Sur ce chemin, seuls le nombre de pierres et les thèmes du jour sont visibles : jamais les équipes ni les textes.</p>
+        <p class="hint" style="margin-top:14px">Un agent IA (Claude, Cursor…) peut lire et alimenter votre cairn : donnez-lui simplement l'adresse de ce site. Serveur MCP sur <code>/mcp</code>, mode d'emploi dans <a href="/llms.txt">llms.txt</a>.</p>
       </div>
       <div class="horizon">
         <div class="horizon-wrap" id="horizonWrap">
@@ -424,18 +429,23 @@
   </form>
 </dialog>
 
-<!-- Connecter Claude -->
+<!-- Connecter un agent IA (serveur MCP distant, clés personnelles) -->
 <dialog id="dlgMcp" aria-labelledby="dlgMcpTitle">
-  <h2 id="dlgMcpTitle">Connecter Claude (MCP)</h2><p class="hint sub">Poser des pierres depuis une conversation ou un compte rendu de réunion.</p>
+  <h2 id="dlgMcpTitle">Connecter un agent IA (MCP)</h2><p class="hint sub">Poser des pierres depuis une conversation, retrouver ce que l'équipe a appris, extraire les retex d'un compte rendu.</p>
   <div class="account">
-    <p class="hint" style="margin:0 0 8px">Le serveur MCP WeCairn permet de publier un retex depuis une conversation Claude ou d'extraire les enseignements d'un compte rendu de réunion. Il se connecte avec votre e-mail et votre mot de passe WeCairn et ne voit que votre organisation.</p>
-    <p class="hint" style="margin:0 0 4px">1. Sur votre poste : <code>cd WeCairn/mcp && npm install</code></p>
-    <p class="hint" style="margin:0 0 4px">2. Dans Claude Desktop (<code>claude_desktop_config.json</code>) ou Claude Code :</p>
-    <pre id="mcpSnippet"></pre>
-    <div class="row">
-      <button class="btn" type="button" id="btnCopyMcp">Copier</button>
-      <button class="btn primary" type="button" data-close="dlgMcp">Fermer</button>
+    <p style="margin:0 0 6px">Donnez cette adresse à votre agent (Claude, Cursor, ChatGPT…) :</p>
+    <pre class="mono" id="mcpUrl"></pre>
+    <p class="hint" style="margin:6px 0 14px">Il vous demandera une clé personnelle. Générez-en une ci-dessous et collez-la dans la conversation. Elle vaut 30 jours, n'ouvre que votre organisation, avec vos droits, et se révoque ici.</p>
+    <div class="row" style="justify-content:flex-start;margin:0 0 10px"><input id="keyName" placeholder="Nom de l'agent, ex. Claude Code" maxlength="80" style="flex:1"><button class="btn primary" type="button" id="btnNewKey">Générer une clé</button></div>
+    <div id="newKey" hidden>
+      <p class="hint" style="margin:0 0 4px">Votre nouvelle clé, affichée une seule fois :</p>
+      <pre class="mono" id="newKeyValue"></pre>
+      <div class="row" style="justify-content:flex-start;margin:6px 0 12px"><button class="btn" type="button" id="btnCopyKey">Copier la clé</button><button class="btn" type="button" id="btnCopyCmd">Copier la commande Claude Code</button></div>
     </div>
+    <p class="hint" style="margin:8px 0 4px"><b>Vos clés</b></p>
+    <ul class="lb" id="keyList"></ul>
+    <p class="hint" style="margin:12px 0 0">Mode d'emploi pour les agents : <a href="/llms.txt" target="_blank" rel="noopener">llms.txt</a>. Serveur local (stdio) : voir <code>docs/mcp.md</code>.</p>
+    <div class="row"><button class="btn primary" type="button" data-close="dlgMcp">Fermer</button></div>
   </div>
 </dialog>
 
@@ -1039,13 +1049,36 @@ document.addEventListener("click", (e) => {
     $("#dlgOrg").showModal();
   }
   if (item.dataset.menu === "mcp") {
-    $("#mcpSnippet").textContent = JSON.stringify({ mcpServers: { wecairn: { command: "node", args: ["/chemin/vers/WeCairn/mcp/server.js"],
-      env: { WECAIRN_URL, WECAIRN_EMAIL: state.user.email, WECAIRN_PASSWORD: "votre mot de passe WeCairn" } } } }, null, 2);
-    $("#dlgMcp").showModal();
+    $("#mcpUrl").textContent = `${WECAIRN_URL}/mcp`; $("#newKey").hidden = true; $("#keyName").value = "";
+    loadKeys(); $("#dlgMcp").showModal();
   }
 });
 document.addEventListener("click", (e) => { const c = e.target.closest("[data-close]"); if (c) $("#" + c.dataset.close).close(); });
-$("#btnCopyMcp").addEventListener("click", async () => { try { await navigator.clipboard.writeText($("#mcpSnippet").textContent); toast("Configuration copiée."); } catch (_) { toast("Copie impossible, sélectionnez le texte."); } });
+/* ---------- Clés d'API pour les agents (serveur MCP distant) ---------- */
+const copy = async (txt, ok) => { try { await navigator.clipboard.writeText(txt); toast(ok); } catch (_) { toast("Copie impossible, sélectionnez le texte."); } };
+const pbDate = (d) => new Date(String(d).replace(" ", "T"));
+async function loadKeys() {
+  const ul = $("#keyList");
+  try {
+    const rows = await pb.collection("api_keys").getFullList({ sort: "-created" });
+    ul.innerHTML = rows.length ? rows.map(k => {
+      const exp = pbDate(k.expires), dead = exp < new Date();
+      return `<li><span>${esc(k.name)} <code>${esc(k.prefix)}…</code></span><span class="lvl">${dead ? "expirée" : "expire le " + exp.toLocaleDateString("fr-FR")}${k.last_used ? ", utilisée le " + pbDate(k.last_used).toLocaleDateString("fr-FR") : ""}</span><button type="button" class="toggle danger" data-revoke="${k.id}" style="margin:0 0 0 auto">Révoquer</button></li>`;
+    }).join("") : `<li class="hint">Aucune clé pour l'instant.</li>`;
+  } catch (e) { ul.innerHTML = `<li class="hint">${esc(errMsg(e))}</li>`; }
+}
+$("#btnNewKey").addEventListener("click", async () => {
+  try {
+    const k = await pb.send("/api/wecairn/keys", { method: "POST", body: { name: $("#keyName").value.trim() || "Mon agent" } });
+    state.lastKey = k.key; $("#newKeyValue").textContent = k.key; $("#newKey").hidden = false; loadKeys(); toast("Clé générée, valable 30 jours.");
+  } catch (e) { toast(errMsg(e)); }
+});
+$("#btnCopyKey").addEventListener("click", () => copy(state.lastKey || "", "Clé copiée."));
+$("#btnCopyCmd").addEventListener("click", () => copy(`claude mcp add --transport http wecairn ${WECAIRN_URL}/mcp --header "Authorization: Bearer ${state.lastKey || ""}"`, "Commande copiée."));
+$("#keyList").addEventListener("click", async (e) => {
+  const b = e.target.closest("[data-revoke]"); if (!b) return;
+  try { await pb.collection("api_keys").delete(b.dataset.revoke); toast("Clé révoquée."); loadKeys(); } catch (err) { toast(errMsg(err)); }
+});
 $("#formOrg").addEventListener("submit", async (e) => {
   e.preventDefault();
   const fd = new FormData(e.target);

@@ -77,6 +77,9 @@ navigateur. C'est la seule donnée visible sans connexion.
   En mode temps réel, le serveur génère un jeton éphémère limité à une session.
 - Le mot de passe unique application / console n'existe que si un superutilisateur porte le même e-mail qu'un membre ;
   les hooks alignent les deux mots de passe à chaque connexion et à chaque changement.
+- Serveur MCP distant (`pb_hooks/mcp.pb.js`, `mcp.js`) : Streamable HTTP sans état sur `/mcp`, clés personnelles
+  (`api_keys`, hachées, 30 jours), découverte par `/llms.txt` et `/.well-known/mcp.json`. Les outils appellent l'API
+  REST en boucle locale avec un jeton de l'utilisateur, donc sous les règles d'accès des collections.
 - Notifications (`pb_hooks/notify.pb.js`, `notify.js`) : une tâche cron passe chaque minute et prévient par e-mail
   les membres quand une pierre est posée, et l'auteur d'une pierre (plus ceux qui l'ont calée ou commentée) quand un commentaire
   arrive. Les champs masqués `retex.notified` et `comments.notified` servent de file d'attente : publier reste

@@ -10,14 +10,14 @@
 <p align="center">
   <a href="#démarrer-en-cinq-minutes">Démarrer</a> ·
   <a href="docs/deploiement.md">Déployer</a> ·
-  <a href="docs/mcp.md">Connecter Claude</a> ·
+  <a href="docs/mcp.md">Connecter un agent IA</a> ·
   <a href="docs/ia-vocale.md">Partage vocal</a> ·
   <a href="CONTRIBUTING.md">Contribuer</a>
 </p>
 
 ---
 
-*English summary: WeCairn is a lightweight, self-hosted app for sharing lessons learned (retex, "retour d'expérience") inside an organisation. Each lesson is a stone laid on a cairn; teammates vote ("cale") and comment, and a friendly progression keeps the practice alive. One PocketBase binary, one HTML file, an MCP server so Claude can read and write retex on your behalf, and optional voice capture with Mistral or OpenAI. French UI. MIT licence.*
+*English summary: WeCairn is a lightweight, self-hosted app for sharing lessons learned (retex, "retour d'expérience") inside an organisation. Each lesson is a stone laid on a cairn; teammates vote ("cale") and comment, and a friendly progression keeps the practice alive. One PocketBase binary, one HTML file, a remote MCP server (one URL, one personal key) so any AI agent can read and write retex on your behalf, and optional voice capture with Mistral or OpenAI. French UI. MIT licence.*
 
 ## Pourquoi
 
@@ -52,9 +52,10 @@ depuis son compte.
 de son e-mail professionnel, et les règles d'accès sont appliquées par la base de données, pas par l'interface.
 L'équipe nomme son organisation et fixe les objectifs de son cairn.
 
-**Alimenter depuis Claude.** Un serveur MCP expose dix outils (lister, chercher, publier, modifier, voter, commenter…)
-et un prompt d'extraction de retex depuis une transcription de réunion. Claude agit avec le compte de l'utilisateur,
-donc avec ses droits.
+**Alimenter depuis un agent IA.** Un serveur MCP est servi sur le même domaine : l'utilisateur donne l'adresse du site
+à son agent (Claude, Cursor…), l'agent découvre le serveur (`llms.txt`), demande une clé personnelle générée en un clic
+(valable 30 jours), et propose dix outils (lister, chercher, publier, modifier, caler, commenter…) plus un prompt
+d'extraction de retex depuis une transcription. Il agit avec le compte de l'utilisateur, donc avec ses droits.
 
 **Raconter à l'oral.** Avec une clé Mistral, l'utilisateur dicte son retex et l'IA le structure. Avec une clé OpenAI,
 il tient un entretien vocal en temps réel : l'IA écoute, relance, puis remplit le formulaire. Rien n'est publié sans
