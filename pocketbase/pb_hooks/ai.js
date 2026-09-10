@@ -39,7 +39,7 @@ function resolveConfig(app, authRecord) {
     sttModel: String(envVar("AI_STT_MODEL") || base.stt),
     chatModel: String(envVar("AI_CHAT_MODEL") || base.chat),
     realtimeModel: base.realtime ? String(envVar("AI_REALTIME_MODEL") || base.realtime) : "",
-    voice: String(envVar("AI_VOICE") || "marin"),
+    voice: String(envVar("AI_VOICE") || "shimmer"),
   };
 }
 

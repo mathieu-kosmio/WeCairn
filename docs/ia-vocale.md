@@ -10,7 +10,7 @@ Dans les deux cas, le formulaire est pré-rempli et rien n'est publié sans rele
 
 Modèles par défaut (surchargeables par variables d'environnement) : Mistral `voxtral-mini-latest` et
 `mistral-small-latest` ; OpenAI `gpt-4o-mini-transcribe` et `gpt-4o-mini` pour la dictée, `gpt-realtime-mini`
-(voix `marin`) pour l'entretien.
+(voix `shimmer`) pour l'entretien.
 
 ## Où va la clé
 
