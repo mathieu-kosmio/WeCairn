@@ -13,8 +13,17 @@
      `/pb/pocketbase superuser upsert vous@exemple.fr 'un-mot-de-passe-solide' --dir /pb/pb_data`
    - **Lien d'installation** : dans les *Logs* du conteneur, au premier démarrage, PocketBase imprime une URL
      `…/_/#/pbinstal/<jeton>` ; remplacer `0.0.0.0:8090` par le domaine public et l'ouvrir.
-5. **Settings > Import collections** : charger `pocketbase/pb_schema.json`, valider. Une seule fois ; ensuite les
-   collections vivent dans le volume `wecairn_data`.
+5. **Settings > Import collections** : charger `pocketbase/pb_schema.json`, **activer « Merge with the existing
+   collections »** (sinon l'import supprime les collections système, dont `_superusers`), puis *Review* et *Confirm*.
+   Une seule fois ; ensuite les collections vivent dans le volume `wecairn_data`. Si l'interface répond « Failed to
+   import collections », passer par l'API, qui prend le fichier tel quel :
+   ```bash
+   TOKEN=$(curl -s -X POST https://wecairn.exemple.fr/api/collections/_superusers/auth-with-password \
+     -H 'Content-Type: application/json' -d '{"identity":"vous@exemple.fr","password":"..."}' | jq -r .token)
+   jq '{collections: ., deleteMissing: false}' pocketbase/pb_schema.json | \
+     curl -s -X PUT https://wecairn.exemple.fr/api/collections/import -H "Authorization: $TOKEN" \
+     -H 'Content-Type: application/json' --data @-
+   ```
 6. **Settings > Mail settings** : renseigner un SMTP (Brevo ou autre) pour la réinitialisation de mot de passe.
    Sans SMTP, tout fonctionne sauf « Mot de passe oublié ».
 7. **Settings > Backups** : activer les sauvegardes automatiques vers un S3 (Garage ou MinIO sur le même Coolify,
