@@ -71,7 +71,7 @@
   header .wrap { display: flex; align-items: center; gap: 12px; height: 60px; }
   @media (max-width: 640px) {
     header .wrap { gap: 8px; }
-    header .lbl, header #orgName { display: none; }
+    header .lbl { display: none; }
     .avatar { margin-right: 0; }
     .btn.primary { border-radius: 6px 6px 14px 6px; }
   }
@@ -255,7 +255,6 @@
 <a class="skip" href="#main">Aller au contenu</a>
 <header><div class="wrap">
   <h1 class="logo"><svg viewBox="0 0 26 26" aria-hidden="true"><path d="M2 22c-1-3 3-7 11-7s12 3 11 6-4 3-11 3-10 1-11-2z" fill="currentColor" opacity=".45"/><path d="M5 15c-1-3 3-6 8-6s9 2 8 5-3 3-8 3-7 1-8-2z" fill="currentColor" opacity=".7"/><path d="M8 9c0-2 2-4 5-4s5 2 5 3-2 3-5 3-5 0-5-2z" fill="#e0743a"/></svg>We<span>Cairn</span></h1>
-  <div class="hint" id="orgName"></div>
   <div class="spacer"></div>
   <button class="btn primary" id="btnNew" hidden aria-label="Poser une pierre">+ <span class="lbl">Poser une pierre</span></button>
   <button class="btn icon" id="btnTheme" type="button" aria-label="Thème : automatique" title="Thème : automatique">
@@ -503,10 +502,9 @@ async function setSession() {
   $("#viewLogin").hidden = !!state.user;
   $("#viewApp").hidden = !state.user;
   $("#btnNew").hidden = $("#userMenu").hidden = !state.user;
-  if (!state.user) { $("#orgName").textContent = ""; loadHorizon(); return; }
+  if (!state.user) { loadHorizon(); return; }
   renderMenu();
   try { state.org = await pb.collection("organisations").getOne(state.user.organisation); } catch (_) { state.org = null; }
-  $("#orgName").textContent = state.org?.name ?? "";
   refresh();
   loadAiConfig();
   if (!subscribed) {
@@ -1048,7 +1046,7 @@ $("#formOrg").addEventListener("submit", async (e) => {
   const objectives = String(fd.get("objectives") || "").split("\n").map(l => l.trim()).filter(Boolean).slice(0, 5).join("\n");
   try {
     state.org = await pb.collection("organisations").update(state.user.organisation, { name: String(fd.get("name")).trim(), objectives });
-    $("#orgName").textContent = state.org.name; $("#dlgOrg").close(); toast("Cairn mis à jour."); refresh();
+    $("#dlgOrg").close(); toast("Cairn mis à jour."); refresh();
   } catch (err) { toast(errMsg(err)); }
 });
 $("#formAccount").addEventListener("submit", async (e) => {
