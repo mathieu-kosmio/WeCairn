@@ -54,7 +54,7 @@ L'équipe nomme son organisation et fixe les objectifs de son cairn.
 
 **Alimenter depuis un agent IA.** Un serveur MCP est servi sur le même domaine : l'utilisateur donne l'adresse du site
 à son agent (Claude, Cursor…), l'agent découvre le serveur (`llms.txt`), demande une clé personnelle générée en un clic
-(valable 30 jours), et propose dix outils (lister, chercher, publier, modifier, caler, commenter…) plus un prompt
+(valable 30 jours) — ou, depuis claude.ai et ChatGPT, une simple autorisation OAuth dans le navigateur — et propose dix outils (lister, chercher, publier, modifier, caler, commenter…) plus un prompt
 d'extraction de retex depuis une transcription. Il agit avec le compte de l'utilisateur, donc avec ses droits.
 
 **Raconter à l'oral.** Avec une clé Mistral, l'utilisateur dicte son retex et l'IA le structure. Avec une clé OpenAI,

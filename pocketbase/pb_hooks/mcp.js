@@ -214,7 +214,11 @@ function llmsTxt(base, appName) {
 
 - Adresse : ${base}/mcp
 - Transport : MCP Streamable HTTP, sans état (POST JSON-RPC ; GET renvoie 405).
-- Authentification : en-tête \`Authorization: Bearer <clé>\`. La clé commence par \`wc_\` et vaut ${KEY_DAYS} jours.
+- Authentification, au choix :
+  - en-tête \`Authorization: Bearer <clé>\` ; la clé commence par \`wc_\` et vaut ${KEY_DAYS} jours (voir ci-dessous) ;
+  - OAuth 2.1 (code + PKCE, enregistrement dynamique) pour les connecteurs qui ne savent pas envoyer d'en-tête,
+    comme claude.ai ou ChatGPT : métadonnées sur ${base}/.well-known/oauth-authorization-server, l'utilisateur
+    autorise l'agent dans son navigateur, rien à coller.
 - Description lisible par machine : ${base}/.well-known/mcp.json
 
 ### Obtenir une clé (à expliquer à l'utilisateur)
@@ -249,7 +253,8 @@ function helpJSON(base, appName) {
     url: `${base}/mcp`, transport: "streamable-http", stateless: true,
     authentication: { type: "bearer", header: "Authorization: Bearer <clé>", key_prefix: "wc_", validity_days: KEY_DAYS,
       how_to_get_key: `Se connecter sur ${base}, menu utilisateur > « Connecter un agent (MCP) » > « Générer une clé », puis coller la clé dans la conversation avec l'agent.` },
-    setup: { claude_code: `claude mcp add --transport http wecairn ${base}/mcp --header "Authorization: Bearer <clé>"` },
+    oauth: { authorization_server: `${base}/.well-known/oauth-authorization-server`, flows: ["authorization_code+pkce"], dynamic_client_registration: true },
+    setup: { claude_code: `claude mcp add --transport http wecairn ${base}/mcp --header "Authorization: Bearer <clé>"`, claude_ai: `Paramètres > Connecteurs > Ajouter un connecteur personnalisé > URL ${base}/mcp, puis « Connecter » : l'autorisation s'ouvre dans le navigateur.` },
     tools: TOOLS.map((t) => t.name), prompts: PROMPTS.map((p) => p.name),
     documentation: `${base}/llms.txt`,
   };

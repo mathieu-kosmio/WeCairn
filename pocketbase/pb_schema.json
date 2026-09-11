@@ -595,6 +595,67 @@
     "deleteRule": "user = @request.auth.id"
   },
   {
+    "id": "weretexoauth001",
+    "name": "oauth_clients",
+    "type": "base",
+    "system": false,
+    "fields": [
+      {
+        "name": "id",
+        "type": "text",
+        "primaryKey": true,
+        "system": true,
+        "required": true,
+        "min": 15,
+        "max": 15,
+        "pattern": "^[a-z0-9]+$",
+        "autogeneratePattern": "[a-z0-9]{15}"
+      },
+      {
+        "name": "client_id",
+        "type": "text",
+        "required": true,
+        "min": 8,
+        "max": 64
+      },
+      {
+        "name": "name",
+        "type": "text",
+        "required": true,
+        "min": 1,
+        "max": 80,
+        "presentable": true
+      },
+      {
+        "name": "redirect_uris",
+        "type": "text",
+        "required": true,
+        "min": 2,
+        "max": 4000
+      },
+      {
+        "name": "created",
+        "type": "autodate",
+        "onCreate": true,
+        "onUpdate": false
+      },
+      {
+        "name": "updated",
+        "type": "autodate",
+        "onCreate": true,
+        "onUpdate": true
+      }
+    ],
+    "indexes": [
+      "CREATE UNIQUE INDEX idx_oauth_clients_id ON oauth_clients (client_id)"
+    ],
+    "listRule": null,
+    "viewRule": null,
+    "createRule": null,
+    "updateRule": null,
+    "deleteRule": null
+  },
+  {
     "id": "weretexfeed0001",
     "name": "retex_feed",
     "type": "view",

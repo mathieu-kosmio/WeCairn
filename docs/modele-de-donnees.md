@@ -23,6 +23,9 @@ hook, jamais par le client), `mute_emails` (le membre coupe les notifications de
 clé, masqué), `expires` (30 jours), `last_used`. Créées par la route `/api/wecairn/keys`, listées et révoquées par leur
 propriétaire. La clé complète n'est jamais stockée.
 
+**oauth_clients** : `client_id`, `name`, `redirect_uris` (JSON). Clients OAuth enregistrés dynamiquement par les
+connecteurs ; verrouillée pour l'API, écrite par les hooks seulement.
+
 ## Vues SQL
 
 **retex_feed** joint le retex, le nom de l'auteur, le nombre de votes et de commentaires. C'est ce que lit le fil.
@@ -51,6 +54,7 @@ bon public, discutant). Le score « tendance » du fil (votes pondérés par l'a
 | votes | son organisation | au nom de soi-même | interdite | auteur du vote |
 | comments | son organisation | au nom de soi-même | auteur | auteur |
 | api_keys | ses propres clés | route dédiée | interdite | propriétaire |
+| oauth_clients | interdite | route dédiée | interdite | interdite |
 | retex_feed, leaderboard | son organisation | vues | vues | vues |
 
 Quand une règle refuse une modification, PocketBase répond `404` (l'enregistrement est « introuvable » pour cet

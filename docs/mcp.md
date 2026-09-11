@@ -21,9 +21,26 @@ Rien à installer, aucune configuration à éditer, aucun mot de passe transmis.
 | `/llms.txt` | Mode d'emploi en clair : adresse du serveur, obtention de la clé, configuration, outils |
 | `/.well-known/mcp.json` | La même chose, lisible par machine |
 | `GET /mcp` | Description JSON (405 si un flux SSE est demandé) |
-| `POST /mcp` sans clé | 401 avec les instructions pour obtenir une clé |
+| `POST /mcp` sans clé | 401 avec les instructions pour obtenir une clé, et `resource_metadata` pour lancer OAuth |
+| `/.well-known/oauth-authorization-server` | Métadonnées OAuth (autorisation, jeton, enregistrement) |
 
 La page d'accueil porte aussi `<meta name="mcp-server" content="/mcp">` et un lien vers `llms.txt`.
+
+## Depuis claude.ai, Cowork ou ChatGPT : OAuth, sans clé à coller
+
+Les connecteurs de claude.ai (et de Cowork, ChatGPT…) ne savent pas envoyer d'en-tête personnalisé : ils passent par
+OAuth. WeCairn l'expose devant le même `/mcp`, et le résultat est identique : une clé personnelle de 30 jours, visible
+et révocable dans « Connecter un agent IA ».
+
+1. Paramètres › Connecteurs › **Ajouter un connecteur personnalisé**, URL `https://wecairn.exemple.fr/mcp`.
+2. « Connecter » : le client s'enregistre tout seul (RFC 7591), une page WeCairn s'ouvre, l'utilisateur se connecte
+   si besoin et clique **Autoriser**.
+3. Le connecteur apparaît dans toutes les conversations. À l'expiration, claude.ai propose de se reconnecter.
+
+Détails : code d'autorisation + PKCE S256 obligatoire, client public (`token_endpoint_auth_method: none`), métadonnées
+sur `/.well-known/oauth-authorization-server` et `/.well-known/oauth-protected-resource`, codes valables 10 minutes et
+à usage unique, pas de jeton de rafraîchissement (une réautorisation tous les 30 jours). Le `401` de `/mcp` porte
+`resource_metadata`, ce qui suffit à un client MCP pour découvrir le flux.
 
 ## Protocole et authentification
 

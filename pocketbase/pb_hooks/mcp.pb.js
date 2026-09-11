@@ -17,11 +17,12 @@ routerAdd("POST", "/mcp", (e) => {
   const key = String(e.request.header.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
   const user = key ? mcp.userForKey($app, key) : null;
   if (!user) {
-    e.response.header().set("WWW-Authenticate", 'Bearer realm="WeCairn", error="invalid_token"');
+    e.response.header().set("WWW-Authenticate", `Bearer realm="WeCairn", error="invalid_token", resource_metadata="${base}/.well-known/oauth-protected-resource"`);
     return e.json(401, {
       error: "unauthorized",
       message: `Clé d'API ${key ? "invalide ou expirée" : "manquante"}. Ce serveur MCP attend l'en-tête « Authorization: Bearer <clé> ».`,
       how_to_get_key: `Demandez à l'utilisateur d'ouvrir ${base}, de se connecter, puis menu utilisateur > « Connecter un agent (MCP) » > « Générer une clé » (valable ${mcp.KEY_DAYS} jours), et de vous coller la clé.`,
+      oauth: `Les clients OAuth (connecteurs claude.ai, ChatGPT…) découvrent le flux via ${base}/.well-known/oauth-authorization-server ; l'utilisateur autorise l'agent dans son navigateur, sans clé à coller.`,
       documentation: `${base}/llms.txt`,
     });
   }
