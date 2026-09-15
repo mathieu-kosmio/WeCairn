@@ -10,7 +10,8 @@ RUN apk add --no-cache ca-certificates unzip wget \
  && unzip -q /tmp/pb.zip -d /pb && rm /tmp/pb.zip \
  && apk del unzip wget
 
-COPY pocketbase/pb_hooks   /pb/pb_hooks
+COPY pocketbase/pb_hooks      /pb/pb_hooks
+COPY pocketbase/pb_migrations /pb/pb_migrations
 COPY pocketbase/pb_schema.json /pb/pb_schema.json
 COPY web                   /pb/pb_public
 
@@ -21,4 +22,4 @@ VOLUME ["/pb/pb_data"]
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s \
   CMD wget -q -O /dev/null http://127.0.0.1:8090/api/health || exit 1
 
-CMD ["/pb/pocketbase", "serve", "--http=0.0.0.0:8090", "--dir=/pb/pb_data", "--hooksDir=/pb/pb_hooks", "--publicDir=/pb/pb_public"]
+CMD ["/pb/pocketbase", "serve", "--http=0.0.0.0:8090", "--dir=/pb/pb_data", "--hooksDir=/pb/pb_hooks", "--migrationsDir=/pb/pb_migrations", "--publicDir=/pb/pb_public"]

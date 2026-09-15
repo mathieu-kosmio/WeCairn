@@ -36,8 +36,12 @@ function userForKey(app, key) {
   try { rec = app.findFirstRecordByData("api_keys", "hash", hashKey(key)); } catch (_) { return null; }
   const exp = Date.parse(String(rec.get("expires")).replace(" ", "T"));
   if (!exp || exp < Date.now()) return null;
+  let user;
+  try { user = app.findRecordById("users", rec.get("user")); } catch (_) { return null; }
+  // Même règle que la connexion (authRule) : newAuthToken() ne la vérifie pas, une adresse non confirmée n'ouvre rien.
+  if (!user.get("verified")) return null;
   try { app.db().newQuery("UPDATE api_keys SET last_used = {:now} WHERE id = {:id}").bind({ now: new Date().toISOString().replace("T", " "), id: rec.id }).execute(); } catch (_) {}
-  try { return app.findRecordById("users", rec.get("user")); } catch (_) { return null; }
+  return user;
 }
 
 /* ---------- Client REST en boucle locale, avec le jeton de l'utilisateur ---------- */

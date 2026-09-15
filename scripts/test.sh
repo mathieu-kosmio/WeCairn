@@ -4,8 +4,8 @@
 # =============================================================================
 # 1. S'assure que le binaire .local/pocketbase existe (via scripts/pb.sh).
 # 2. Lance PocketBase sur un port libre (défaut 8099) avec --dir dans un dossier
-#    temporaire et les hooks du dépôt. Le schéma est importé par les tests eux-mêmes
-#    (via l'API superutilisateur), comme en production (import manuel des collections).
+#    temporaire, les hooks et les migrations du dépôt. Les migrations importent le
+#    schéma et appliquent authRule = "verified = true", comme en production.
 # 3. Crée le superutilisateur test@example.com / test-password-123.
 # 4. Attend /api/health, exporte PB_URL, PB_ADMIN_EMAIL, PB_ADMIN_PASSWORD.
 # 5. Exécute `node --test tests/*.test.mjs`, arrête l'instance, nettoie (trap).
@@ -67,7 +67,7 @@ trap cleanup EXIT INT TERM
 mkdir -p "$PB_DATA_DIR"
 
 # --- 3. Superutilisateur ----------------------------------------------------
-"$PB_BIN" superuser upsert "$TEST_EMAIL" "$TEST_PASSWORD" --dir "$PB_DATA_DIR" >/dev/null
+"$PB_BIN" superuser upsert "$TEST_EMAIL" "$TEST_PASSWORD" --dir "$PB_DATA_DIR" --migrationsDir pocketbase/pb_migrations >/dev/null
 
 # --- 4. Lancement et attente ------------------------------------------------
 # Le serveur MCP appelle l'API en boucle locale : il doit viser le port de l'instance de test.
@@ -79,6 +79,7 @@ export PB_FAKE_AI_PORT="$((PORT + 1))"
   --http "127.0.0.1:${PORT}" \
   --dir "$PB_DATA_DIR" \
   --hooksDir pocketbase/pb_hooks \
+  --migrationsDir pocketbase/pb_migrations \
   --publicDir web > "$PB_LOG" 2>&1 &
 PB_PID=$!
 
