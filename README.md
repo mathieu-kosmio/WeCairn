@@ -92,8 +92,10 @@ Pour un déploiement (Coolify, Docker), voir [docs/deploiement.md](docs/deploiem
 ```
 web/index.html                   l'interface, une page, sans build, servie par PocketBase
 pocketbase/pb_schema.json        collections, vues SQL (fil, cordée), règles d'accès par organisation
-pocketbase/pb_hooks/             rattachement par domaine, normalisation, IA vocale, compte, horizon
+pocketbase/pb_hooks/             rattachement par domaine, normalisation, IA vocale, compte, horizon, MCP, OAuth
+pocketbase/pb_migrations/        import du schéma puis durcissement, rejoués une fois au démarrage
 mcp/server.js                    serveur MCP (stdio) pour Claude Desktop et Claude Code
+scripts/, tests/                 serveur de dev, tests d'intégration (make dev, make test)
 Dockerfile, docker-compose.yaml   une image, un volume
 docs/                            documentation
 ```
@@ -110,10 +112,18 @@ de retex. Les choix et leurs limites sont détaillés dans [docs/architecture.md
 | [docs/architecture.md](docs/architecture.md) | Choix techniques, isolation multi-organisation, limites assumées |
 | [docs/modele-de-donnees.md](docs/modele-de-donnees.md) | Collections, vues, règles d'accès, barème de progression |
 | [docs/deploiement.md](docs/deploiement.md) | Coolify, Docker, variables d'environnement, sauvegardes, mises à jour |
+| [docs/securite.md](docs/securite.md) | Modèle de sécurité, protections reliées aux tests, risques résiduels, checklist de mise en production |
 | [docs/mcp.md](docs/mcp.md) | Connecter Claude : configuration, outils, prompt d'extraction |
 | [docs/ia-vocale.md](docs/ia-vocale.md) | Dictée (Mistral) et entretien temps réel (OpenAI), clés, coûts, données |
 | [docs/design.md](docs/design.md) | L'univers du Cairn : palette, typographie, vocabulaire, mouvement, thèmes |
 | [docs/accessibilite.md](docs/accessibilite.md) | Conformité RGAA / WCAG 2.1 AA, ce qui est vérifié et comment |
+
+## Sécurité
+
+Les règles d'accès vivent dans le schéma et s'appliquent à tout client (navigateur, MCP, `curl`) ; chaque protection
+a un test rejoué par `make test`. Le modèle de sécurité, les risques résiduels assumés et la liste de contrôle avant
+mise en production sont dans [docs/securite.md](docs/securite.md). Pour signaler une faille en privé, voir
+[SECURITY.md](SECURITY.md).
 
 ## Contribuer
 

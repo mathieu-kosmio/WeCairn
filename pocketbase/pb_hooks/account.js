@@ -36,4 +36,31 @@ function syncMemberFromSuperuser(app, email, password) {
   }
 }
 
-module.exports = { isSuperadmin, syncMemberFromSuperuser };
+/**
+ * Révoque toutes les clés MCP d'un membre. Appelé quand sa clé de jeton change (nouveau mot de passe,
+ * réinitialisation) : une clé créée par quelqu'un qui aurait pris le compte ne survit pas à la reprise en main.
+ */
+function revokeKeys(app, userId) {
+  try {
+    app.db().newQuery("DELETE FROM api_keys WHERE user = {:u}").bind({ u: String(userId) }).execute();
+  } catch (err) {
+    app.logger().warn("wecairn: révocation des clés impossible", "user", String(userId), "err", String(err));
+  }
+}
+
+/**
+ * Supprime les comptes jamais confirmés après `days` jours. Un compte non vérifié ne peut ni se connecter ni
+ * poser de pierre : il n'a pas de contenu. La purge limite la fenêtre pendant laquelle un compte créé sur
+ * l'adresse de quelqu'un d'autre attend un clic distrait sur le lien de confirmation.
+ */
+function purgeUnverified(app, days) {
+  const before = new Date(Date.now() - days * 86400000).toISOString().replace("T", " ");
+  let n = 0;
+  for (const u of app.findRecordsByFilter("users", "verified = false && created < {:before}", "created", 500, 0, { before })) {
+    try { app.delete(u); n++; } catch (err) { app.logger().warn("wecairn: purge d'un compte non vérifié impossible", "id", u.id, "err", String(err)); }
+  }
+  if (n) app.logger().info("wecairn: comptes non vérifiés supprimés", "count", n, "days", days);
+  return n;
+}
+
+module.exports = { isSuperadmin, syncMemberFromSuperuser, revokeKeys, purgeUnverified, UNVERIFIED_DAYS: 7 };

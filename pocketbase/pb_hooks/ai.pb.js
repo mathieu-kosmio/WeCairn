@@ -33,6 +33,10 @@ routerAdd("POST", "/api/wecairn/ai/dictate", (e) => {
   try { files = e.findUploadedFiles("audio") || []; } catch (_) { files = []; }
   if (!files.length) throw new BadRequestError("Aucun enregistrement audio reçu.");
   if (files[0].size > 25 * 1024 * 1024) throw new BadRequestError("Enregistrement trop volumineux (25 Mo maximum).");
+  // Seuls des formats audio partent chez le fournisseur (extensions produites par MediaRecorder et usuelles).
+  if (!/\.(webm|ogg|oga|mp4|m4a|mp3|mpeg|mpga|wav|flac)$/i.test(String(files[0].originalName || ""))) {
+    throw new BadRequestError("Format audio non pris en charge (webm, ogg, mp4, m4a, mp3, wav ou flac).");
+  }
 
   const previous = String(e.requestInfo().body.transcript || "").slice(0, 20000);
   const segment = ai.transcribe(cfg, files[0]);
