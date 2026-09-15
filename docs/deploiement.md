@@ -39,8 +39,17 @@
 
 L'interface est servie à la racine du domaine, l'API sous `/api/`, la console sous `/_/`.
 
-Mise à jour : `git push`, puis redéployer dans Coolify. Réimporter le schéma uniquement s'il a changé (« delete
-missing » décoché).
+Mise à jour : `git push`, puis redéployer dans Coolify (auto-déploiement sur `main` si activé). Le schéma et le
+durcissement sont désormais appliqués par les migrations de `pocketbase/pb_migrations/`, rejouées une seule fois au
+démarrage ; l'import manuel n'est plus nécessaire.
+
+> **Sécurité et mise à niveau.** La migration `users_require_verified` réserve la connexion aux adresses vérifiées :
+> elle renouvelle le secret des jetons, donc **tous les membres sont déconnectés une fois** et se reconnectent. Avant
+> de déployer, marquer vérifiés les comptes légitimes à conserver (`make verify-user EMAIL=…`) et vérifier qu'un
+> canal d'e-mail fonctionne (Brevo ou SMTP). La migration `security_hardening` active la limitation de débit (adresse
+> réelle lue dans `X-Forwarded-For`), l'index d'adresse insensible à la casse, l'invisibilité des non vérifiés et les
+> avatars protégés. Le conteneur tourne sans les droits root : au premier démarrage, l'appartenance du volume
+> `pb_data` est réalignée sur l'utilisateur `pb`. Détails et liste de contrôle : [securite.md](securite.md).
 
 ## Docker sans Coolify
 
