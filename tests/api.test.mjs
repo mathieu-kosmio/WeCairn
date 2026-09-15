@@ -11,7 +11,6 @@
  */
 import { test, before } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 
 const BASE = process.env.PB_URL || "http://127.0.0.1:8090";
@@ -48,6 +47,9 @@ async function login(email) {
   assert.equal(r.status, 200, `connexion ${email} : ${JSON.stringify(r.data)}`);
   return { token: r.data.token, user: r.data.record };
 }
+async function mcp(key, method, params = {}, id = 1) {
+  return api("POST", "/mcp", { token: key ? `Bearer ${key}` : undefined, body: { jsonrpc: "2.0", id, method, params } });
+}
 const newRetex = (u, over = {}) => ({
   organisation: u.user.organisation, author: u.user.id,
   title: "Cadrer les données avant l'atelier",
@@ -66,10 +68,7 @@ before(async () => {
   assert.equal(r.status, 200, "authentification superutilisateur");
   admin = r.data.token;
 
-  // Import du schéma comme en production (merge, sans supprimer les collections système).
-  const collections = JSON.parse(readFileSync("pocketbase/pb_schema.json", "utf8"));
-  const imp = await api("PUT", "/api/collections/import", { token: admin, body: { collections, deleteMissing: false } });
-  assert.ok(imp.status >= 200 && imp.status < 300, `import du schéma : ${imp.status} ${JSON.stringify(imp.data)}`);
+  // Le schéma est importé et durci par les migrations au démarrage (voir pocketbase/pb_migrations/).
 
   for (const [email, name] of [[`alice@${acme}`, "Alice"], [`bob@${acme}`, "Bob"], [`carol@${other}`, "Carol"]]) {
     const s = await signup(email, name);
@@ -142,6 +141,50 @@ test("GET /api/wecairn/me indique si le membre est superutilisateur", async () =
   const r = await api("GET", "/api/wecairn/me", { token: alice.token });
   assert.deepEqual(r.data, { superadmin: false });
   assert.equal((await api("GET", "/api/wecairn/me")).status, 401);
+});
+
+/* ---------- Vérification des adresses (phase 2) ---------- */
+test("connexion refusée tant que l'adresse n'est pas vérifiée", async () => {
+  const email = `frank@${acme}`;
+  assert.equal((await signup(email, "Frank")).status, 200);
+  const r = await api("POST", "/api/collections/users/auth-with-password", { body: { identity: email, password: "password-123" } });
+  assert.notEqual(r.status, 200, "un compte non vérifié ne doit pas pouvoir se connecter");
+  await verify(email);
+  await login(email);
+});
+
+test("la collection users exige une adresse vérifiée pour se connecter", async () => {
+  const r = await api("GET", "/api/collections/users", { token: admin });
+  assert.equal(r.data.authRule, "verified = true");
+});
+
+test("un membre ne peut pas se marquer lui-même comme vérifié", async () => {
+  const email = `grace@${acme}`;
+  const created = await signup(email, "Grace", { verified: true });
+  // Le champ verified envoyé à l'inscription est ignoré : le compte reste non vérifié.
+  if (created.status === 200) {
+    const r = await api("POST", "/api/collections/users/auth-with-password", { body: { identity: email, password: "password-123" } });
+    assert.notEqual(r.status, 200, "verified fourni à l'inscription est ignoré");
+  } else {
+    assert.equal(created.status, 400);
+  }
+  // Un membre connecté ne peut pas non plus changer son propre statut.
+  await api("PATCH", `${records("users")}/${bob.user.id}`, { token: bob.token, body: { verified: false } });
+  const after = await api("GET", `${records("users")}/${bob.user.id}`, { token: admin });
+  assert.equal(after.data.verified, true, "verified reste géré par l'administration");
+});
+
+test("MCP : la clé d'un membre non vérifié est refusée", async () => {
+  const email = `heidi@${acme}`;
+  assert.equal((await signup(email, "Heidi")).status, 200);
+  await verify(email);
+  const heidi = await login(email);
+  const k = await api("POST", "/api/wecairn/keys", { token: heidi.token, body: { name: "Agent de Heidi" } });
+  assert.ok(k.data.key, `clé émise : ${JSON.stringify(k.data)}`);
+  assert.equal((await mcp(k.data.key, "ping")).status, 200);
+  // Cas d'une base antérieure à la vérification obligatoire : clé émise, adresse jamais confirmée.
+  await api("PATCH", `${records("users")}/${heidi.user.id}`, { token: admin, body: { verified: false } });
+  assert.equal((await mcp(k.data.key, "ping")).status, 401, "une clé n'ouvre rien tant que l'adresse n'est pas vérifiée");
 });
 
 /* ---------- Pierres : règles d'accès de base ---------- */

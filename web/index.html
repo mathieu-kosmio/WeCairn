@@ -312,6 +312,7 @@
         <div class="links">
           <button type="button" id="toggleMode">Créer un compte</button>
           <button type="button" id="forgot">Mot de passe oublié</button>
+          <button type="button" id="resendVerify" hidden>Renvoyer l'e-mail de confirmation</button>
         </div>
         <p class="hint" id="loginMsg" role="alert"></p>
       </div>
@@ -536,6 +537,7 @@ $("#toggleMode").addEventListener("click", () => {
   $("#loginSubmit").textContent = signup ? "Créer mon compte" : "Se connecter";
   $("#toggleMode").textContent = signup ? "J'ai déjà un compte" : "Créer un compte";
   $("#loginPwd").autocomplete = signup ? "new-password" : "current-password";
+  $("#resendVerify").hidden = true;
   $("#loginMsg").textContent = "";
 });
 $("#formLogin").addEventListener("submit", async (e) => {
@@ -544,10 +546,30 @@ $("#formLogin").addEventListener("submit", async (e) => {
   $("#loginMsg").textContent = "";
   try {
     if (state.mode === "signup") {
+      // Le compte n'est utilisable qu'une fois l'adresse confirmée (authRule « verified = true ») :
+      // on envoie l'e-mail de confirmation et on repasse en mode connexion, sans connecter l'utilisateur.
       await pb.collection("users").create({ email, password, passwordConfirm: password, name: $("#loginName").value.trim() });
+      await pb.collection("users").requestVerification(email).catch(() => {});
+      $("#toggleMode").click();
+      $("#loginEmail").value = email;
+      $("#resendVerify").hidden = false;
+      $("#loginMsg").textContent = "Compte créé. Un e-mail de confirmation vient de vous être envoyé : cliquez sur le lien qu'il contient, puis connectez-vous.";
+      return;
     }
     await pb.collection("users").authWithPassword(email, password);
-  } catch (err) { $("#loginMsg").textContent = "Erreur : " + errMsg(err); }
+  } catch (err) {
+    const unverified = state.mode === "login" && (err?.status === 403 || err?.status === 400);
+    $("#resendVerify").hidden = !unverified;
+    $("#loginMsg").textContent = unverified
+      ? "Connexion impossible. Vérifiez votre mot de passe ; si vous venez de créer votre compte, confirmez d'abord votre adresse avec le lien reçu par e-mail."
+      : "Erreur : " + errMsg(err);
+  }
+});
+$("#resendVerify").addEventListener("click", async () => {
+  const email = $("#loginEmail").value.trim();
+  if (!email) { $("#loginMsg").textContent = "Indiquez d'abord votre adresse e-mail."; return; }
+  try { await pb.collection("users").requestVerification(email); $("#loginMsg").textContent = "Si un compte en attente de confirmation existe, un nouvel e-mail a été envoyé."; }
+  catch (err) { $("#loginMsg").textContent = "Erreur : " + errMsg(err); }
 });
 $("#forgot").addEventListener("click", async () => {
   const email = $("#loginEmail").value.trim();

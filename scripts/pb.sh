@@ -138,7 +138,7 @@ mkdir -p "$PB_DATA_DIR"
 # --- 4. Superutilisateur ----------------------------------------------------
 if [ -n "${PB_ADMIN_EMAIL:-}" ] && [ -n "${PB_ADMIN_PASSWORD:-}" ]; then
   echo "Création ou mise à jour du superutilisateur ${PB_ADMIN_EMAIL}..."
-  "$PB_BIN" superuser upsert "$PB_ADMIN_EMAIL" "$PB_ADMIN_PASSWORD" --dir "$PB_DATA_DIR" >/dev/null
+  "$PB_BIN" superuser upsert "$PB_ADMIN_EMAIL" "$PB_ADMIN_PASSWORD" --dir "$PB_DATA_DIR" --migrationsDir pocketbase/pb_migrations >/dev/null
 fi
 
 # --- 5. Lancement -----------------------------------------------------------
@@ -146,6 +146,7 @@ SERVE_ARGS=(serve
   --http "127.0.0.1:${PB_PORT}"
   --dir "$PB_DATA_DIR"
   --hooksDir pocketbase/pb_hooks
+  --migrationsDir pocketbase/pb_migrations
   --publicDir web)
 
 print_urls() {

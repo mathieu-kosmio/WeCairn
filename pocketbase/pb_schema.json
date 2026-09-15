@@ -206,7 +206,7 @@
     "updateRule": "id = @request.auth.id && @request.body.organisation:isset = false && @request.body.email:isset = false",
     "deleteRule": null,
     "manageRule": null,
-    "authRule": "",
+    "authRule": "verified = true",
     "passwordAuth": {
       "enabled": true,
       "identityFields": [
