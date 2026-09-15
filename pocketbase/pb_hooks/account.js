@@ -1,29 +1,39 @@
 /**
- * Compte utilisateur WeCairn : détection superadmin et alignement des mots de passe
- * entre la collection users et _superusers (même e-mail). Module CommonJS.
+ * Compte utilisateur WeCairn : détection superadmin et alignement des mots de passe entre un
+ * superutilisateur (_superusers) et son jumeau membre (users) de même e-mail. Module CommonJS.
+ *
+ * SÉCURITÉ : l'alignement va UNIQUEMENT de la console vers l'application, et seulement vers un membre
+ * dont l'adresse est vérifiée. Jamais l'inverse : sinon quiconque s'inscrit avec l'e-mail d'un
+ * administrateur remplacerait son mot de passe de console (prise de contrôle). Le test « prise de
+ * contrôle du superutilisateur impossible » de tests/api.test.mjs protège cette règle.
  */
 
+/** Vrai si le membre connecté a une adresse vérifiée qui est aussi celle d'un superutilisateur. */
 function isSuperadmin(app, authRecord) {
-  const email = String((authRecord && authRecord.get("email")) || "").toLowerCase();
+  if (!authRecord || !authRecord.get("verified")) return false;
+  const email = String(authRecord.get("email") || "").toLowerCase();
   if (!email) return false;
   try { app.findAuthRecordByEmail("_superusers", email); return true; } catch (_) { return false; }
 }
 
-/** Aligne le mot de passe du compte jumeau (même e-mail) dans l'autre collection. Silencieux s'il n'existe pas. */
-function syncTwinPassword(app, fromCollection, email, password) {
+/**
+ * Après une connexion ou un changement de mot de passe réussi dans la console, aligne le mot de passe
+ * du membre jumeau (même e-mail, adresse vérifiée). Silencieux s'il n'existe pas ou n'est pas vérifié.
+ */
+function syncMemberFromSuperuser(app, email, password) {
   email = String(email || "").trim().toLowerCase();
   password = String(password || "");
   if (!email || !password) return;
-  const twinCollection = fromCollection === "users" ? "_superusers" : "users";
-  let twin;
-  try { twin = app.findAuthRecordByEmail(twinCollection, email); } catch (_) { return; }
+  let member;
+  try { member = app.findAuthRecordByEmail("users", email); } catch (_) { return; }
+  if (!member.get("verified")) return;
   try {
-    if (twin.validatePassword(password)) return;
-    twin.setPassword(password);
-    app.save(twin);
+    if (member.validatePassword(password)) return;
+    member.setPassword(password);
+    app.save(member);
   } catch (err) {
-    app.logger().warn("wecairn: alignement du mot de passe impossible", "collection", twinCollection, "err", String(err));
+    app.logger().warn("wecairn: alignement du mot de passe membre impossible", "err", String(err));
   }
 }
 
-module.exports = { isSuperadmin, syncTwinPassword };
+module.exports = { isSuperadmin, syncMemberFromSuperuser };

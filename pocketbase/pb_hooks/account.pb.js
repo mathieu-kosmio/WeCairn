@@ -2,12 +2,15 @@
 /**
  * WeCairn : compte utilisateur.
  *
- * 1. GET /api/wecairn/me -> { superadmin } : vrai si un superutilisateur PocketBase porte le même e-mail
- *    que l'utilisateur connecté (l'interface affiche alors le lien vers la console /_/).
- * 2. Mot de passe unique : quand une personne est à la fois membre (collection users) et superutilisateur
- *    (_superusers) avec le même e-mail, les deux mots de passe sont alignés à chaque connexion réussie
- *    et à chaque changement de mot de passe, dans les deux sens. La console et l'application partagent
- *    ainsi le même mot de passe sans double saisie. Logique dans account.js (require, VM isolées).
+ * 1. GET /api/wecairn/me -> { superadmin } : vrai si le membre connecté, adresse vérifiée, porte le même e-mail
+ *    qu'un superutilisateur PocketBase (l'interface affiche alors le lien vers la console /_/).
+ * 2. Mot de passe unique, dans un seul sens : quand un superutilisateur se connecte à la console ou change
+ *    son mot de passe, le membre jumeau (même e-mail, adresse vérifiée) reçoit le même mot de passe.
+ *    L'inverse est volontairement impossible (voir account.js) : un compte membre, qui s'obtient par
+ *    simple inscription, ne doit jamais pouvoir modifier un accès administrateur de console.
+ *
+ * Note PocketBase : chaque handler s'exécute dans une VM isolée, d'où le require() à l'intérieur des
+ * handlers plutôt que des constantes au niveau du fichier.
  */
 
 routerAdd("GET", "/api/wecairn/me", (e) => {
@@ -15,33 +18,15 @@ routerAdd("GET", "/api/wecairn/me", (e) => {
   return e.json(200, { superadmin: acc.isSuperadmin($app, e.auth) });
 }, $apis.requireAuth());
 
-// Connexion réussie : on aligne le jumeau sur le mot de passe qui vient d'être validé
+// Connexion réussie à la console : on aligne le membre jumeau vérifié sur le mot de passe qui vient d'être validé
 onRecordAuthWithPasswordRequest((e) => {
   e.next();
-  require(`${__hooks}/account.js`).syncTwinPassword($app, "users", e.identity, e.password);
-}, "users");
-
-onRecordAuthWithPasswordRequest((e) => {
-  e.next();
-  require(`${__hooks}/account.js`).syncTwinPassword($app, "_superusers", e.identity, e.password);
+  require(`${__hooks}/account.js`).syncMemberFromSuperuser($app, e.record.get("email"), e.password);
 }, "_superusers");
 
-// Changement de mot de passe (application ou console) : on propage au jumeau
+// Changement de mot de passe d'un superutilisateur (console) : on propage au membre jumeau vérifié
 onRecordUpdateRequest((e) => {
   const pwd = String(e.requestInfo().body.password || "");
   e.next();
-  if (pwd) require(`${__hooks}/account.js`).syncTwinPassword($app, "users", e.record.get("email"), pwd);
-}, "users");
-
-onRecordUpdateRequest((e) => {
-  const pwd = String(e.requestInfo().body.password || "");
-  e.next();
-  if (pwd) require(`${__hooks}/account.js`).syncTwinPassword($app, "_superusers", e.record.get("email"), pwd);
+  if (pwd) require(`${__hooks}/account.js`).syncMemberFromSuperuser($app, e.record.get("email"), pwd);
 }, "_superusers");
-
-// Inscription d'un membre dont l'e-mail est déjà superutilisateur : même mot de passe dès le départ
-onRecordCreateRequest((e) => {
-  const pwd = String(e.requestInfo().body.password || "");
-  e.next();
-  if (pwd) require(`${__hooks}/account.js`).syncTwinPassword($app, "users", e.record.get("email"), pwd);
-}, "users");
