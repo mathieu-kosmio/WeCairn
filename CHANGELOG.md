@@ -50,9 +50,8 @@ Série de correctifs de sécurité. **Mise à jour impérative.** Livrée en tro
 
 - Mécanisme de migrations (import du schéma, puis durcissement).
 - Harnais de tests d'intégration (`make test`) : instance PocketBase jetable, relais IA simulé localement, aucune
-  clé réelle. 24 tests, un par correctif au moins.
-- Workflow `Tests` : `make test` et construction de l'image Docker (dont vérification de l'exécution non root) sur
-  chaque push et pull request.
+  clé réelle. 24 tests, un par correctif au moins. À lancer avant de pousser ; le déploiement se fait ensuite par
+  l'auto-déploiement Coolify sur `main`.
 - `SECURITY.md`, `docs/securite.md`.
 
 ### Mise à niveau

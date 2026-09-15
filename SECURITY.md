@@ -42,7 +42,7 @@ Nous créditons les personnes qui signalent une faille dans l'avis publié, sauf
 ## Périmètre
 
 Dans le périmètre : tout le code de ce dépôt (hooks, schéma et règles d'accès, interface, serveur MCP, OAuth, relais
-IA, scripts, Dockerfile, workflows GitHub, configuration Compose).
+IA, scripts, Dockerfile, configuration Compose).
 
 Hors périmètre, à signaler au projet concerné :
 

@@ -105,8 +105,7 @@ La colonne « Test » renvoie aux tests de `tests/api.test.mjs`.
 |---|---|
 | Archive PocketBase vérifiée par SHA-256 épinglé (image) ou `checksums.txt` de la release (`scripts/pb.sh`) | `Dockerfile`, `scripts/pb.sh` |
 | Conteneur exécuté sans les droits root (utilisateur `pb`, bascule `su-exec`) | `Dockerfile`, `docker-entrypoint.sh` |
-| Jeton GitHub limité à `contents: read` | `.github/workflows/test.yml` |
-| Image Docker construite à chaque push et pull request, exécution non root vérifiée | `.github/workflows/test.yml` |
+| Image construite par Coolify depuis le dépôt à chaque déploiement ; `make test` lancé avant de pousser | `Dockerfile`, `scripts/test.sh` |
 | Aucun secret versionné : `.local/`, binaire et données ignorés | `.gitignore` |
 
 ## Risques résiduels
@@ -172,5 +171,5 @@ make test
 ```
 
 `make test` monte une instance PocketBase jetable, applique les migrations, démarre un faux fournisseur IA (aucune
-clé réelle) et rejoue les 24 tests d'intégration. Le workflow `Tests` l'exécute et construit l'image Docker sur
-chaque push et pull request.
+clé réelle) et rejoue les 24 tests d'intégration. Le lancer avant de pousser ; le déploiement se fait ensuite par
+l'auto-déploiement Coolify sur `main`, qui reconstruit l'image depuis le dépôt.
