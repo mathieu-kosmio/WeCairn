@@ -25,7 +25,13 @@ function hexToB64url(hex) {
 }
 const pkceOk = (verifier, challenge) => !!verifier && hexToB64url($security.sha256(String(verifier))) === String(challenge);
 
-const isRedirectOk = (u) => /^https:\/\/[^\s/?#]+/.test(u) || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|$)/.test(u);
+// Adresse de retour acceptée : https, ou http sur la boucle locale ; sans fragment, identifiants ni joker, 512 caractères au plus.
+const isRedirectOk = (u) => u.length <= 512 && !/[\s#*]/.test(u)
+  && (/^https:\/\/[a-z0-9.-]+(:\d+)?(\/|\?|$)/i.test(u) || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/|\?|$)/.test(u));
+const redirectHost = (u) => { const m = /^https?:\/\/([^/:?]+)/i.exec(String(u || "")); return m ? m[1].toLowerCase() : ""; };
+// Hôtes des connecteurs connus : pour tout autre, la page d'autorisation affiche un avertissement.
+const KNOWN_REDIRECT_HOSTS = ["claude.ai", "claude.com", "chatgpt.com", "chat.openai.com", "localhost", "127.0.0.1"];
+const isKnownHost = (h) => KNOWN_REDIRECT_HOSTS.some((k) => h === k || h.endsWith("." + k));
 
 /* ---------- Métadonnées de découverte ---------- */
 function serverMetadata(base) {
@@ -48,8 +54,11 @@ function resourceMetadata(base) {
 
 /* ---------- Clients (enregistrement dynamique) ---------- */
 function registerClient(app, body) {
-  const uris = Array.isArray(body.redirect_uris) ? body.redirect_uris.map(String).filter(isRedirectOk) : [];
-  if (!uris.length) throw new BadRequestError("redirect_uris : au moins une adresse https (ou http://localhost) est requise.");
+  const raw = Array.isArray(body.redirect_uris) ? body.redirect_uris.map(String) : [];
+  if (!raw.length || raw.length > 5 || !raw.every(isRedirectOk)) {
+    throw new BadRequestError("redirect_uris : une à cinq adresses https (ou http://localhost), sans fragment, identifiants ni joker.");
+  }
+  const uris = raw;
   const rec = new Record(app.findCollectionByNameOrId("oauth_clients"));
   rec.set("client_id", $security.randomStringWithAlphabet(32, "abcdefghijklmnopqrstuvwxyz0123456789"));
   rec.set("name", String(body.client_name || "Agent").slice(0, 80));
@@ -111,12 +120,14 @@ function authorizePage(ctx) {
   .row { display:flex; gap:10px; justify-content:flex-end; margin-top:18px } button { font:inherit; font-weight:600; padding:10px 16px; border-radius:6px 6px 14px 6px; border:1px solid var(--line); background:var(--card-2); color:var(--ink); cursor:pointer }
   button.primary { background:var(--accent); border-color:var(--accent); color:#2b1a10 } .msg { color:#9e2f2f; font-size:13px; min-height:1.2em; margin:8px 0 0 } [hidden] { display:none !important }
   ul { margin:0 0 14px; padding-left:18px } li { margin:2px 0 }
+  .warn { border-left:4px solid #9e2f2f; padding:8px 12px; background:var(--card-2); font-size:14px }
 </style></head>
 <body><main class="card" id="app" data-params="${data}">
   <p class="logo">We<b>Cairn</b></p>
   ${ctx.error ? `<p class="kicker">Demande refusée</p><h1>Impossible d'autoriser cet agent</h1><p>${esc(ctx.error)}</p><p class="muted">Fermez cette fenêtre et relancez la connexion depuis l'agent.</p>` : `
   <p class="kicker">Un agent demande l'accès</p>
   <h1>Autoriser <span id="clientName">${esc(ctx.client.name)}</span> à rejoindre votre cairn ?</h1>
+  <p class="${isKnownHost(redirectHost(p.redirect_uri)) ? "muted" : "warn"}">L'accès sera transmis à <strong>${esc(redirectHost(p.redirect_uri))}</strong>.${isKnownHost(redirectHost(p.redirect_uri)) ? "" : " Cette adresse n'est pas celle d'un connecteur connu : n'autorisez que si vous venez de lancer vous-même la connexion depuis cet agent. Le nom affiché est choisi par le demandeur."}</p>
   <p class="muted">Il agira en votre nom, dans votre organisation seulement, avec vos droits : lire les retex, poser des pierres, caler, commenter. L'accès vaut 30 jours et se révoque dans <i>Mon compte</i> › <i>Connecter un agent IA</i>.</p>
   <div id="login" hidden>
     <label for="email">Adresse e-mail professionnelle</label><input id="email" type="email" autocomplete="username" required>
@@ -126,7 +137,7 @@ function authorizePage(ctx) {
   <p class="msg" id="msg" role="alert"></p>
   <div class="row"><button type="button" id="deny">Refuser</button><button type="button" class="primary" id="ok">Autoriser</button></div>`}
 </main>
-<script src="https://cdn.jsdelivr.net/npm/pocketbase@0.28.1/dist/pocketbase.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pocketbase@0.28.1/dist/pocketbase.umd.js" integrity="sha384-Pr74Q4nJqBcqXYMrsOS8tSw8t8N0Nayn7pWqFRdz9MsePI7uo55HNdxwrCcIRD8e" crossorigin="anonymous"></script>
 <script>
 (function () {
   const root = document.getElementById("app"); if (!document.getElementById("ok")) return;
@@ -149,4 +160,4 @@ function authorizePage(ctx) {
 </script></body></html>`;
 }
 
-module.exports = { SCOPE, noStore, CODE_TTL_S, pkceOk, serverMetadata, resourceMetadata, registerClient, findClient, checkClient, issueCode, consumeCode, withQuery, authorizePage, esc };
+module.exports = { SCOPE, noStore, isRedirectOk, redirectHost, isKnownHost, CODE_TTL_S, pkceOk, serverMetadata, resourceMetadata, registerClient, findClient, checkClient, issueCode, consumeCode, withQuery, authorizePage, esc };

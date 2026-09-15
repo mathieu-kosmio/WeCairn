@@ -161,7 +161,7 @@
         ],
         "name": "avatar",
         "presentable": false,
-        "protected": false,
+        "protected": true,
         "required": false,
         "system": false,
         "thumbs": null,
@@ -197,11 +197,11 @@
     ],
     "indexes": [
       "CREATE UNIQUE INDEX idx_users_tokenKey ON users (tokenKey)",
-      "CREATE UNIQUE INDEX idx_users_email ON users (email) WHERE email != ''",
+      "CREATE UNIQUE INDEX idx_users_email ON users (email COLLATE NOCASE) WHERE email != ''",
       "CREATE INDEX idx_users_org ON users (organisation)"
     ],
-    "listRule": "organisation = @request.auth.organisation",
-    "viewRule": "organisation = @request.auth.organisation",
+    "listRule": "organisation = @request.auth.organisation && verified = true",
+    "viewRule": "organisation = @request.auth.organisation && verified = true",
     "createRule": "@request.body.organisation:isset = false",
     "updateRule": "id = @request.auth.id && @request.body.organisation:isset = false && @request.body.email:isset = false",
     "deleteRule": null,
@@ -669,7 +669,7 @@
     "name": "leaderboard",
     "type": "view",
     "system": false,
-    "viewQuery": "SELECT u.id, u.organisation, u.name,\n  (SELECT COUNT(*) FROM retex r WHERE r.author = u.id) AS retex_count,\n  (SELECT COUNT(*) FROM votes v JOIN retex r ON r.id = v.retex WHERE r.author = u.id) AS votes_received,\n  (SELECT COUNT(*) FROM votes v WHERE v.user = u.id) AS votes_given,\n  (SELECT COUNT(*) FROM comments c WHERE c.author = u.id) AS comments_count,\n  (10 * (SELECT COUNT(*) FROM retex r WHERE r.author = u.id)\n   + 2 * (SELECT COUNT(*) FROM votes v JOIN retex r ON r.id = v.retex WHERE r.author = u.id)\n   + 1 * (SELECT COUNT(*) FROM votes v WHERE v.user = u.id)\n   + 3 * (SELECT COUNT(*) FROM comments c WHERE c.author = u.id)) AS points\nFROM users u",
+    "viewQuery": "SELECT u.id, u.organisation, u.name,\n  (SELECT COUNT(*) FROM retex r WHERE r.author = u.id) AS retex_count,\n  (SELECT COUNT(*) FROM votes v JOIN retex r ON r.id = v.retex WHERE r.author = u.id) AS votes_received,\n  (SELECT COUNT(*) FROM votes v WHERE v.user = u.id) AS votes_given,\n  (SELECT COUNT(*) FROM comments c WHERE c.author = u.id) AS comments_count,\n  (10 * (SELECT COUNT(*) FROM retex r WHERE r.author = u.id)\n   + 2 * (SELECT COUNT(*) FROM votes v JOIN retex r ON r.id = v.retex WHERE r.author = u.id)\n   + 1 * (SELECT COUNT(*) FROM votes v WHERE v.user = u.id)\n   + 3 * (SELECT COUNT(*) FROM comments c WHERE c.author = u.id)) AS points\nFROM users u\nWHERE u.verified = TRUE",
     "listRule": "organisation = @request.auth.organisation",
     "viewRule": "organisation = @request.auth.organisation"
   }

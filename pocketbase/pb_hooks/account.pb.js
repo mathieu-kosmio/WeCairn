@@ -8,6 +8,8 @@
  *    son mot de passe, le membre jumeau (même e-mail, adresse vérifiée) reçoit le même mot de passe.
  *    L'inverse est volontairement impossible (voir account.js) : un compte membre, qui s'obtient par
  *    simple inscription, ne doit jamais pouvoir modifier un accès administrateur de console.
+ * 3. Clé de jeton changée (nouveau mot de passe, réinitialisation) : les clés MCP du membre sont révoquées.
+ * 4. Chaque nuit, les comptes jamais confirmés depuis 7 jours sont supprimés.
  *
  * Note PocketBase : chaque handler s'exécute dans une VM isolée, d'où le require() à l'intérieur des
  * handlers plutôt que des constantes au niveau du fichier.
@@ -30,3 +32,17 @@ onRecordUpdateRequest((e) => {
   e.next();
   if (pwd) require(`${__hooks}/account.js`).syncMemberFromSuperuser($app, e.record.get("email"), pwd);
 }, "_superusers");
+
+// Nouveau mot de passe ou reprise du compte : PocketBase renouvelle tokenKey, on révoque aussi les clés MCP.
+onRecordUpdate((e) => {
+  // PocketBase renouvelle tokenKey pendant l'enregistrement : on compare à l'état chargé, après e.next().
+  const before = String(e.record.original().get("tokenKey"));
+  e.next();
+  if (String(e.record.get("tokenKey")) !== before) require(`${__hooks}/account.js`).revokeKeys(e.app, e.record.id);
+}, "users");
+
+// Chaque nuit, purge des comptes jamais confirmés depuis UNVERIFIED_DAYS jours.
+cronAdd("wecairn_purge_unverified", "17 3 * * *", () => {
+  const acc = require(`${__hooks}/account.js`);
+  acc.purgeUnverified($app, acc.UNVERIFIED_DAYS);
+});

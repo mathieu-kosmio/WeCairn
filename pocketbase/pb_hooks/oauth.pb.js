@@ -56,7 +56,8 @@ routerAdd("POST", "/oauth/token", (e) => {
   if (String(b.grant_type) !== "authorization_code") return fail("unsupported_grant_type", "Seul authorization_code est pris en charge ; à l'expiration (30 jours), relancez l'autorisation.");
   const d = oauth.consumeCode($app, b.code);
   if (!d) return fail("invalid_grant", "Code inconnu, déjà utilisé ou expiré.");
-  if (b.client_id && String(b.client_id) !== d.client_id) return fail("invalid_grant", "client_id différent de celui de l'autorisation.");
+  if (String(b.client_id || "") !== d.client_id) return fail("invalid_grant", "client_id absent ou différent de celui de l'autorisation.");
+  // redirect_uri reste facultatif ici (OAuth 2.1 : le code est déjà lié par PKCE) mais doit correspondre s'il est fourni.
   if (b.redirect_uri && String(b.redirect_uri) !== d.redirect_uri) return fail("invalid_grant", "redirect_uri différent de celui de l'autorisation.");
   if (!oauth.pkceOk(b.code_verifier, d.code_challenge)) return fail("invalid_grant", "Vérification PKCE échouée.");
   let user; try { user = $app.findRecordById("users", d.user); } catch (_) { return fail("invalid_grant", "Utilisateur introuvable."); }

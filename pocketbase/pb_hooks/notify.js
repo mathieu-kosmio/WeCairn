@@ -126,7 +126,7 @@ function notifyRetex(app, m) {
     markNotified(app, "retex", r.id);
     let org, author;
     try { org = app.findRecordById("organisations", r.get("organisation")); author = app.findRecordById("users", r.get("author")); } catch (_) { continue; }
-    const members = app.findRecordsByFilter("users", "organisation = {:org} && id != {:me} && mute_emails = false", "name", 500, 0, { org: org.id, me: author.id });
+    const members = app.findRecordsByFilter("users", "organisation = {:org} && id != {:me} && mute_emails = false && verified = true", "name", 500, 0, { org: org.id, me: author.id });
     if (!members.length) continue;
     let tags = []; try { tags = JSON.parse(String(r.get("tags") || "[]")); } catch (_) {}
     const mail = renderRetexEmail({ appName: m.appName, appURL: m.appURL, orgName: org.get("name"), authorName: author.get("name"),
@@ -152,7 +152,7 @@ function notifyComments(app, m) {
       const mine = batch.filter((c) => c.get("author") !== pid);
       if (!mine.length) continue;
       const u = getUser(pid);
-      if (!u || u.get("mute_emails") || u.get("organisation") !== org.id) continue;
+      if (!u || u.get("mute_emails") || !u.get("verified") || u.get("organisation") !== org.id) continue;
       const mail = renderCommentEmail({ appName: m.appName, appURL: m.appURL, orgName: org.get("name"), isAuthor: pid === r.get("author"),
         retex: { id: r.id, title: r.get("title") },
         comments: mine.map((c) => { const a = getUser(c.get("author")); return { authorName: a ? a.get("name") : "Un membre", body: c.get("body") }; }) });
